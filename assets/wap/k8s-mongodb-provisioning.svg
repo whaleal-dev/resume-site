@@ -1,0 +1,119 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1440" height="1020" viewBox="0 0 1440 1020" role="img" aria-labelledby="title desc">
+  <title id="title">WAP 使用 Kubernetes 创建 MongoDB 集群</title>
+  <desc id="desc">展示 Kubernetes 接入、Agent StatefulSet 创建、Pod 和 PVC 就绪、Agent 注册以及 MongoDB 拓扑初始化的流程。</desc>
+  <defs>
+    <marker id="arrow" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto" markerUnits="strokeWidth">
+      <path d="M0,0 L0,6 L9,3 z" fill="#475569"/>
+    </marker>
+    <marker id="k8s-arrow" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto" markerUnits="strokeWidth">
+      <path d="M0,0 L0,6 L9,3 z" fill="#2563eb"/>
+    </marker>
+    <style>
+      .bg { fill: #f8fafc; }
+      .stage { fill: #fff; stroke: #cbd5e1; stroke-width: 1.5; }
+      .stage-title { font: 700 16px "PingFang SC", "Microsoft YaHei", sans-serif; fill: #334155; }
+      .box { stroke-width: 1.5; rx: 10; }
+      .user { fill: #e0f2fe; stroke: #38bdf8; }
+      .wap { fill: #dcfce7; stroke: #22c55e; }
+      .k8s { fill: #dbeafe; stroke: #3b82f6; }
+      .storage { fill: #fef3c7; stroke: #f59e0b; }
+      .agent { fill: #f3e8ff; stroke: #a855f7; }
+      .state { fill: #fee2e2; stroke: #ef4444; }
+      .title { font: 700 15px "PingFang SC", "Microsoft YaHei", sans-serif; fill: #1e293b; text-anchor: middle; }
+      .sub { font: 12px "PingFang SC", "Microsoft YaHei", sans-serif; fill: #475569; text-anchor: middle; }
+      .step { font: 700 13px "PingFang SC", "Microsoft YaHei", sans-serif; fill: #fff; text-anchor: middle; }
+      .flow { fill: none; stroke: #475569; stroke-width: 2; marker-end: url(#arrow); }
+      .k8s-flow { fill: none; stroke: #2563eb; stroke-width: 2; marker-end: url(#k8s-arrow); }
+      .note { font: 12px "PingFang SC", "Microsoft YaHei", sans-serif; fill: #475569; text-anchor: middle; }
+    </style>
+  </defs>
+
+  <rect class="bg" width="1440" height="1020"/>
+  <text x="720" y="38" text-anchor="middle" style="font: 700 24px 'PingFang SC', 'Microsoft YaHei', sans-serif; fill: #0f172a;">WAP 使用 Kubernetes 创建 MongoDB 集群</text>
+  <text x="720" y="63" text-anchor="middle" style="font: 13px 'PingFang SC', 'Microsoft YaHei', sans-serif; fill: #64748b;">Kubernetes 创建稳定 Agent 执行面，WAP 在 Agent 就绪后初始化 MongoDB 拓扑</text>
+
+  <rect class="stage" x="42" y="92" width="1356" height="140" rx="14"/>
+  <text class="stage-title" x="68" y="122">1. 接入与前置校验</text>
+  <circle cx="177" cy="165" r="17" fill="#0ea5e9"/><text class="step" x="177" y="170">1</text>
+  <rect class="box user" x="212" y="130" width="270" height="72"/>
+  <text class="title" x="347" y="158">管理员接入 Kubernetes</text>
+  <text class="sub" x="347" y="181">保存 kubeconfig、集群类型与认证配置</text>
+  <circle cx="596" cy="165" r="17" fill="#0ea5e9"/><text class="step" x="596" y="170">2</text>
+  <rect class="box wap" x="631" y="130" width="285" height="72"/>
+  <text class="title" x="773" y="158">WAP 创建 API Client</text>
+  <text class="sub" x="773" y="181">校验 RBAC、配额、镜像与网关可达性</text>
+  <circle cx="1030" cy="165" r="17" fill="#0ea5e9"/><text class="step" x="1030" y="170">3</text>
+  <rect class="box wap" x="1065" y="130" width="270" height="72"/>
+  <text class="title" x="1200" y="158">提交 Agent Pod 集群</text>
+  <text class="sub" x="1200" y="181">生成 agentId、eventId 与 Namespace 项目</text>
+  <path class="flow" d="M482,166 H579"/>
+  <path class="flow" d="M916,166 H1013"/>
+
+  <rect class="stage" x="42" y="258" width="1356" height="206" rx="14"/>
+  <text class="stage-title" x="68" y="288">2. Kubernetes 执行面编排</text>
+  <circle cx="145" cy="359" r="17" fill="#2563eb"/><text class="step" x="145" y="364">4</text>
+  <rect class="box k8s" x="180" y="313" width="250" height="94"/>
+  <text class="title" x="305" y="342">准备基础资源</text>
+  <text class="sub" x="305" y="365">Namespace、standard StorageClass</text>
+  <text class="sub" x="305" y="386">Headless Service: whaleal-service</text>
+  <circle cx="518" cy="359" r="17" fill="#2563eb"/><text class="step" x="518" y="364">5</text>
+  <rect class="box k8s" x="553" y="313" width="310" height="94"/>
+  <text class="title" x="708" y="342">创建 StatefulSet</text>
+  <text class="sub" x="708" y="365">replicas、CPU/内存 requests 与 limits</text>
+  <text class="sub" x="708" y="386">whaleal/whaleal-agent:latest</text>
+  <circle cx="951" cy="359" r="17" fill="#2563eb"/><text class="step" x="951" y="364">6</text>
+  <rect class="box storage" x="986" y="313" width="315" height="94"/>
+  <text class="title" x="1143" y="342">创建稳定 Pod 与独立 PVC</text>
+  <text class="sub" x="1143" y="365">hostName-0 ... hostName-(N-1)</text>
+  <text class="sub" x="1143" y="386">RWO / pvc-agent-vol /data</text>
+  <path class="k8s-flow" d="M430,360 H501"/>
+  <path class="k8s-flow" d="M863,360 H934"/>
+  <path class="flow" d="M1200,202 V274 H305 V313"/>
+  <text class="note" x="753" y="266">后台顺序调用 Kubernetes API</text>
+  <text class="note" x="708" y="438">AWS 类型 Pod 使用 privileged: true；GKE 不由 WAP 创建 StorageClass</text>
+
+  <rect class="stage" x="42" y="490" width="1356" height="212" rx="14"/>
+  <text class="stage-title" x="68" y="520">3. Agent 注册与 Pod 就绪验证</text>
+  <circle cx="170" cy="602" r="17" fill="#9333ea"/><text class="step" x="170" y="607">7</text>
+  <rect class="box agent" x="205" y="550" width="350" height="105"/>
+  <text class="title" x="380" y="578">Agent 容器启动</text>
+  <text class="sub" x="380" y="601">挂载 /data，接收 podType、foreign.url、agentId</text>
+  <text class="sub" x="380" y="622">向 WAP 回传 Pod 主机信息与运行状态</text>
+  <circle cx="695" cy="602" r="17" fill="#9333ea"/><text class="step" x="695" y="607">8</text>
+  <rect class="box wap" x="730" y="550" width="350" height="105"/>
+  <text class="title" x="905" y="578">WAP 保存 PodRecord 并轮询</text>
+  <text class="sub" x="905" y="601">匹配 hostName 前缀、agentId 前缀与 pod=true</text>
+  <text class="sub" x="905" y="622">每 10 秒记录 Pod Condition 与注册数量</text>
+  <circle cx="1205" cy="602" r="17" fill="#9333ea"/><text class="step" x="1205" y="607">9</text>
+  <rect class="box state" x="1240" y="550" width="110" height="105"/>
+  <text class="title" x="1295" y="578">就绪条件</text>
+  <text class="sub" x="1295" y="601">注册数量</text>
+  <text class="sub" x="1295" y="620">= replicas</text>
+
+  <path class="flow" d="M555,603 H678"/>
+  <path class="flow" d="M1080,603 H1188"/>
+  <path class="flow" d="M1143,407 V534 H380 V550"/>
+  <text class="note" x="760" y="527">StatefulSet 调度完成后，Agent 才开始注册</text>
+
+  <rect class="stage" x="42" y="728" width="1356" height="210" rx="14"/>
+  <text class="stage-title" x="68" y="758">4. MongoDB 拓扑创建与运行</text>
+  <circle cx="250" cy="842" r="17" fill="#16a34a"/><text class="step" x="250" y="847">10</text>
+  <rect class="box wap" x="285" y="790" width="325" height="106"/>
+  <text class="title" x="447" y="818">选择 MongoDB 架构</text>
+  <text class="sub" x="447" y="841">单机、副本集或分片集群</text>
+  <text class="sub" x="447" y="862">生成成员、端口、数据目录与任务命令</text>
+  <circle cx="755" cy="842" r="17" fill="#16a34a"/><text class="step" x="755" y="847">11</text>
+  <rect class="box agent" x="790" y="790" width="325" height="106"/>
+  <text class="title" x="952" y="818">Agent 执行 MongoDB 部署</text>
+  <text class="sub" x="952" y="841">安装、启动 MongoDB 进程并初始化拓扑</text>
+  <text class="sub" x="952" y="862">指标、日志和状态持续回传 WAP</text>
+  <circle cx="1230" cy="842" r="17" fill="#16a34a"/><text class="step" x="1230" y="847">12</text>
+  <rect class="box state" x="1265" y="790" width="90" height="106"/>
+  <text class="title" x="1310" y="818">验收</text>
+  <text class="sub" x="1310" y="841">成员健康</text>
+  <text class="sub" x="1310" y="862">监控可用</text>
+  <path class="flow" d="M610,843 H738"/>
+  <path class="flow" d="M1115,843 H1213"/>
+  <path class="flow" d="M1295,655 V748 H447 V790"/>
+  <text class="note" x="870" y="741">Pod 全部就绪后，才进入 MongoDB 创建阶段</text>
+</svg>

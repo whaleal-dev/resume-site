@@ -1,0 +1,113 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1440" height="970" viewBox="0 0 1440 970" role="img" aria-labelledby="title desc">
+  <title id="title">WAP 通过 AWS 自动创建 MongoDB 集群流程</title>
+  <desc id="desc">从用户提交快速创建请求开始，展示 WAP 校验、AWS 网络和计算资源编排、Agent 注册、MongoDB 初始化及事件通知的逻辑。</desc>
+  <defs>
+    <marker id="arrow" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto" markerUnits="strokeWidth">
+      <path d="M0,0 L0,6 L9,3 z" fill="#52647c"/>
+    </marker>
+    <marker id="arrowAws" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto" markerUnits="strokeWidth">
+      <path d="M0,0 L0,6 L9,3 z" fill="#b65d10"/>
+    </marker>
+    <style>
+      .bg { fill: #f8fafc; }
+      .lane { fill: #fff; stroke: #cbd5e1; stroke-width: 1.5; }
+      .lane-title { font: 700 16px "PingFang SC", "Microsoft YaHei", sans-serif; fill: #334155; }
+      .box { stroke-width: 1.5; rx: 10; }
+      .user { fill: #e0f2fe; stroke: #38bdf8; }
+      .wap { fill: #dcfce7; stroke: #22c55e; }
+      .aws { fill: #fff7ed; stroke: #fb923c; }
+      .agent { fill: #fef3c7; stroke: #f59e0b; }
+      .data { fill: #fee2e2; stroke: #ef4444; }
+      .decision { fill: #f3e8ff; stroke: #a855f7; stroke-width: 1.5; }
+      .title { font: 700 16px "PingFang SC", "Microsoft YaHei", sans-serif; fill: #1e293b; text-anchor: middle; }
+      .sub { font: 12.5px "PingFang SC", "Microsoft YaHei", sans-serif; fill: #475569; text-anchor: middle; }
+      .flow { fill: none; stroke: #52647c; stroke-width: 2; marker-end: url(#arrow); }
+      .aws-flow { fill: none; stroke: #b65d10; stroke-width: 2; marker-end: url(#arrowAws); }
+      .dash { fill: none; stroke: #64748b; stroke-width: 1.7; stroke-dasharray: 7 5; marker-end: url(#arrow); }
+      .label { font: 12px "PingFang SC", "Microsoft YaHei", sans-serif; fill: #475569; text-anchor: middle; }
+    </style>
+  </defs>
+
+  <rect class="bg" width="1440" height="970"/>
+  <text x="720" y="37" text-anchor="middle" style="font: 700 24px 'PingFang SC', 'Microsoft YaHei', sans-serif; fill: #0f172a;">WAP 通过 AWS 自动创建 MongoDB 集群</text>
+  <text x="720" y="61" text-anchor="middle" style="font: 13px 'PingFang SC', 'Microsoft YaHei', sans-serif; fill: #64748b;">快速创建副本集 / 分片集群：异步编排、Agent 注册、拓扑初始化</text>
+
+  <rect class="lane" x="40" y="90" width="1360" height="160" rx="14"/>
+  <text class="lane-title" x="65" y="119">请求与任务层</text>
+  <rect class="box user" x="145" y="145" width="215" height="70"/>
+  <text class="title" x="252" y="173">用户 / WAP 控制台</text>
+  <text class="sub" x="252" y="196">选择项目、拓扑与规格</text>
+  <rect class="box wap" x="500" y="135" width="280" height="92"/>
+  <text class="title" x="640" y="164">ops-server-web</text>
+  <text class="sub" x="640" y="188">校验云项目、密码策略与参数</text>
+  <text class="sub" x="640" y="208">创建 clusterId、eventId 与资源绑定</text>
+  <rect class="box data" x="1005" y="145" width="250" height="70"/>
+  <text class="title" x="1130" y="173">MongoDB（平台元数据）</text>
+  <text class="sub" x="1130" y="196">集群、项目、事件与任务记录</text>
+
+  <rect class="lane" x="40" y="275" width="1360" height="238" rx="14"/>
+  <text class="lane-title" x="65" y="304">AWS 基础设施编排层</text>
+  <polygon class="decision" points="260,350 360,305 460,350 360,395"/>
+  <text class="title" x="360" y="346">VPC 可复用？</text>
+  <text class="sub" x="360" y="367">同区域 / 同网络判断</text>
+  <rect class="box aws" x="555" y="326" width="300" height="86"/>
+  <text class="title" x="705" y="354">网络准备</text>
+  <text class="sub" x="705" y="378">VPC、最多 3 个可用区子网</text>
+  <text class="sub" x="705" y="399">安全组、密钥对、Transit Gateway</text>
+  <rect class="box aws" x="985" y="326" width="300" height="86"/>
+  <text class="title" x="1135" y="354">EC2 / EBS 编排</text>
+  <text class="sub" x="1135" y="378">按拓扑并发创建主机与 /data 数据卷</text>
+  <text class="sub" x="1135" y="399">多可用区时轮转分配子网</text>
+  <rect class="box aws" x="555" y="440" width="300" height="48"/>
+  <text class="title" x="705" y="470">S3 VPC Endpoint（适用时）</text>
+  <rect class="box aws" x="985" y="440" width="300" height="48"/>
+  <text class="title" x="1135" y="470">AWS API：EC2、EBS、VPC、S3</text>
+
+  <rect class="lane" x="40" y="538" width="1360" height="240" rx="14"/>
+  <text class="lane-title" x="65" y="567">实例初始化与数据库部署层</text>
+  <rect class="box aws" x="145" y="615" width="255" height="92"/>
+  <text class="title" x="272" y="644">EC2 User Data</text>
+  <text class="sub" x="272" y="668">挂载 /dev/sdf 到 /data</text>
+  <text class="sub" x="272" y="688">下载 Agent 与 JDK 并启动</text>
+  <rect class="box agent" x="530" y="615" width="255" height="92"/>
+  <text class="title" x="657" y="644">agent-collection</text>
+  <text class="sub" x="657" y="668">向 WAP 网关注册并回传主机信息</text>
+  <text class="sub" x="657" y="688">提供命令执行与监控采集能力</text>
+  <rect class="box wap" x="915" y="615" width="330" height="92"/>
+  <text class="title" x="1080" y="644">MongoDB 拓扑初始化</text>
+  <text class="sub" x="1080" y="668">副本集：按节点数创建成员</text>
+  <text class="sub" x="1080" y="688">分片：分片副本集、Config Server、Mongos</text>
+  <rect class="box data" x="530" y="724" width="255" height="34"/>
+  <text class="title" x="657" y="747">Agent 注册状态轮询</text>
+  <rect class="box data" x="915" y="724" width="330" height="34"/>
+  <text class="title" x="1080" y="747">集群元数据、节点映射与用户</text>
+
+  <rect class="lane" x="40" y="803" width="1360" height="112" rx="14"/>
+  <text class="lane-title" x="65" y="832">结果与运维闭环</text>
+  <rect class="box wap" x="370" y="847" width="290" height="46"/>
+  <text class="title" x="515" y="876">事件日志：进度、异常、清理</text>
+  <rect class="box wap" x="800" y="847" width="290" height="46"/>
+  <text class="title" x="945" y="876">通知、监控、备份与扩缩容</text>
+
+  <path class="flow" d="M360,180 H500"/>
+  <text class="label" x="430" y="170">快速创建请求</text>
+  <path class="flow" d="M780,181 H1005"/>
+  <path class="flow" d="M640,227 V350 H260"/>
+  <text class="label" x="430" y="335">异步任务</text>
+  <path class="aws-flow" d="M460,350 H555"/>
+  <text class="label" x="507" y="340">复用或新建</text>
+  <path class="aws-flow" d="M855,369 H985"/>
+  <path class="dash" d="M705,412 V440"/>
+  <path class="dash" d="M1135,412 V440"/>
+  <path class="aws-flow" d="M1135,488 V575 H272 V615"/>
+  <text class="label" x="655" y="564">私网 EC2 启动</text>
+  <path class="flow" d="M400,661 H530"/>
+  <text class="label" x="465" y="651">网关下载与回传</text>
+  <path class="flow" d="M785,661 H915"/>
+  <text class="label" x="850" y="651">主机注册完成</text>
+  <path class="dash" d="M657,707 V724"/>
+  <path class="dash" d="M1080,707 V724"/>
+  <path class="flow" d="M1080,707 V815 H945 V847"/>
+  <path class="flow" d="M640,227 V815 H515 V847"/>
+  <text class="label" x="797" y="804">eventId 全程关联</text>
+</svg>

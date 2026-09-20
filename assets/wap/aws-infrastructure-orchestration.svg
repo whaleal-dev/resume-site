@@ -1,0 +1,120 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1440" height="1020" viewBox="0 0 1440 1020" role="img" aria-labelledby="title desc">
+  <title id="title">WAP AWS EC2 首次编排流程</title>
+  <desc id="desc">展示首次创建 MongoDB 集群时的 AWS 前置检查、网络准备、EC2 和 EBS 创建、User Data 初始化以及 Agent 注册验证。</desc>
+  <defs>
+    <marker id="arrow" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto" markerUnits="strokeWidth">
+      <path d="M0,0 L0,6 L9,3 z" fill="#475569"/>
+    </marker>
+    <marker id="aws-arrow" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto" markerUnits="strokeWidth">
+      <path d="M0,0 L0,6 L9,3 z" fill="#b45309"/>
+    </marker>
+    <style>
+      .bg { fill: #f8fafc; }
+      .stage { fill: #fff; stroke: #cbd5e1; stroke-width: 1.5; }
+      .stage-title { font: 700 16px "PingFang SC", "Microsoft YaHei", sans-serif; fill: #334155; }
+      .box { stroke-width: 1.5; rx: 10; }
+      .input { fill: #e0f2fe; stroke: #38bdf8; }
+      .wap { fill: #dcfce7; stroke: #22c55e; }
+      .network { fill: #fff7ed; stroke: #fb923c; }
+      .compute { fill: #fef3c7; stroke: #f59e0b; }
+      .state { fill: #fee2e2; stroke: #ef4444; }
+      .title { font: 700 15px "PingFang SC", "Microsoft YaHei", sans-serif; fill: #1e293b; text-anchor: middle; }
+      .sub { font: 12px "PingFang SC", "Microsoft YaHei", sans-serif; fill: #475569; text-anchor: middle; }
+      .step { font: 700 13px "PingFang SC", "Microsoft YaHei", sans-serif; fill: #fff; text-anchor: middle; }
+      .flow { fill: none; stroke: #475569; stroke-width: 2; marker-end: url(#arrow); }
+      .aws-flow { fill: none; stroke: #b45309; stroke-width: 2; marker-end: url(#aws-arrow); }
+      .note { font: 12px "PingFang SC", "Microsoft YaHei", sans-serif; fill: #475569; text-anchor: middle; }
+    </style>
+  </defs>
+
+  <rect class="bg" width="1440" height="1020"/>
+  <text x="720" y="38" text-anchor="middle" style="font: 700 24px 'PingFang SC', 'Microsoft YaHei', sans-serif; fill: #0f172a;">WAP AWS EC2 首次编排流程</text>
+  <text x="720" y="63" text-anchor="middle" style="font: 13px 'PingFang SC', 'Microsoft YaHei', sans-serif; fill: #64748b;">前置校验 → 私网网络准备 → 节点展开 → EC2/EBS → User Data → Agent 验证</text>
+
+  <rect class="stage" x="42" y="92" width="1356" height="138" rx="14"/>
+  <text class="stage-title" x="68" y="121">1. 前置校验</text>
+  <circle cx="185" cy="163" r="17" fill="#0ea5e9"/><text class="step" x="185" y="168">1</text>
+  <rect class="box input" x="220" y="130" width="255" height="70"/>
+  <text class="title" x="347" y="158">AWS 凭证验证</text>
+  <text class="sub" x="347" y="181">调用 EC2 API；成功后加密保存</text>
+  <circle cx="595" cy="163" r="17" fill="#0ea5e9"/><text class="step" x="595" y="168">2</text>
+  <rect class="box input" x="630" y="130" width="255" height="70"/>
+  <text class="title" x="757" y="158">项目与配额检查</text>
+  <text class="sub" x="757" y="181">AWS 项目、区域、EC2/EBS/VPC/TGW 配额</text>
+  <circle cx="1005" cy="163" r="17" fill="#0ea5e9"/><text class="step" x="1005" y="168">3</text>
+  <rect class="box wap" x="1040" y="130" width="290" height="70"/>
+  <text class="title" x="1185" y="158">创建异步任务</text>
+  <text class="sub" x="1185" y="181">clusterId、eventId、集群规格与资源绑定</text>
+  <path class="flow" d="M475,165 H578"/>
+  <path class="flow" d="M885,165 H988"/>
+  <path class="flow" d="M1185,200 V242 H302 V320"/>
+  <text class="note" x="760" y="235">后台任务开始首次网络编排</text>
+
+  <rect class="stage" x="42" y="254" width="1356" height="228" rx="14"/>
+  <text class="stage-title" x="68" y="283">2. 首次网络准备（目标 AWS 区域）</text>
+  <circle cx="150" cy="364" r="17" fill="#f97316"/><text class="step" x="150" y="369">4</text>
+  <rect class="box network" x="185" y="320" width="235" height="90"/>
+  <text class="title" x="302" y="348">创建 wap-vpc</text>
+  <text class="sub" x="302" y="371">分配不重叠的 CIDR</text>
+  <text class="sub" x="302" y="391">开启 VPC DNS</text>
+  <circle cx="502" cy="364" r="17" fill="#f97316"/><text class="step" x="502" y="369">5</text>
+  <rect class="box network" x="537" y="320" width="290" height="90"/>
+  <text class="title" x="682" y="348">逐可用区创建子网</text>
+  <text class="sub" x="682" y="371">AZ-1/2/3 → wap-subnet-1/2/3</text>
+  <text class="sub" x="682" y="391">查询、创建、校验、回填 subnetId</text>
+  <circle cx="910" cy="364" r="17" fill="#f97316"/><text class="step" x="910" y="369">6</text>
+  <rect class="box network" x="945" y="320" width="355" height="90"/>
+  <text class="title" x="1122" y="348">创建访问与私网互通资源</text>
+  <text class="sub" x="1122" y="371">Security Group、wap-key-&lt;region&gt;、wap-TGW</text>
+  <text class="sub" x="1122" y="391">VPC Attachment、路由；跨区域则 TGW Peering</text>
+  <path class="aws-flow" d="M420,365 H485"/>
+  <path class="aws-flow" d="M827,365 H893"/>
+  <text class="note" x="682" y="443">multiZone=true：节点依次轮转子网；false：全部使用第一个子网</text>
+  <path class="flow" d="M1122,410 V525 H327 V570"/>
+  <text class="note" x="724" y="518">网络参数完成后生成每台主机的创建参数</text>
+
+  <rect class="stage" x="42" y="506" width="1356" height="202" rx="14"/>
+  <text class="stage-title" x="68" y="535">3. 节点展开与 EC2/EBS 编排</text>
+  <circle cx="160" cy="620" r="17" fill="#d97706"/><text class="step" x="160" y="625">7</text>
+  <rect class="box compute" x="195" y="570" width="265" height="98"/>
+  <text class="title" x="327" y="598">展开节点清单</text>
+  <text class="sub" x="327" y="621">副本集：按 nodeNum</text>
+  <text class="sub" x="327" y="642">分片：每分片 3 节点 + 3 个 Config</text>
+  <circle cx="548" cy="620" r="17" fill="#d97706"/><text class="step" x="548" y="625">8</text>
+  <rect class="box compute" x="583" y="570" width="315" height="98"/>
+  <text class="title" x="740" y="598">RunInstances 创建 EC2</text>
+  <text class="sub" x="740" y="621">AMI、实例类型、子网、安全组、密钥对</text>
+  <text class="sub" x="740" y="642">禁用公网 IP；根卷 50 GiB gp3</text>
+  <circle cx="986" cy="620" r="17" fill="#d97706"/><text class="step" x="986" y="625">9</text>
+  <rect class="box compute" x="1021" y="570" width="295" height="98"/>
+  <text class="title" x="1168" y="598">创建并附加 EBS</text>
+  <text class="sub" x="1168" y="621">同可用区创建指定容量、类型和 IOPS</text>
+  <text class="sub" x="1168" y="642">等待 AVAILABLE → 挂载为 /dev/sdf</text>
+  <path class="flow" d="M460,620 H531"/>
+  <path class="aws-flow" d="M898,620 H969"/>
+  <path class="flow" d="M1168,668 V772 H380 V796"/>
+  <text class="note" x="780" y="764">EC2 运行且数据卷已附加后执行 User Data</text>
+
+  <rect class="stage" x="42" y="732" width="1356" height="222" rx="14"/>
+  <text class="stage-title" x="68" y="761">4. 实例初始化与就绪验证</text>
+  <circle cx="170" cy="847" r="17" fill="#16a34a"/><text class="step" x="170" y="852">10</text>
+  <rect class="box compute" x="205" y="796" width="350" height="108"/>
+  <text class="title" x="380" y="824">EC2 User Data</text>
+  <text class="sub" x="380" y="847">等待 /dev/sdf → XFS 格式化 → 挂载 /data</text>
+  <text class="sub" x="380" y="868">写入 fstab；下载 JDK 17 与 Agent 包</text>
+  <text class="sub" x="380" y="888">写入网关与 Agent 参数，启动 Agent</text>
+  <circle cx="705" cy="847" r="17" fill="#16a34a"/><text class="step" x="705" y="852">11</text>
+  <rect class="box wap" x="740" y="796" width="310" height="108"/>
+  <text class="title" x="895" y="824">Agent 注册验证</text>
+  <text class="sub" x="895" y="847">按实例 ID 轮询 Agent 注册记录</text>
+  <text class="sub" x="895" y="868">上限：min(节点数 × 5 分钟, 40 分钟)</text>
+  <text class="sub" x="895" y="888">成功后写入 hostId 与节点映射</text>
+  <circle cx="1180" cy="847" r="17" fill="#16a34a"/><text class="step" x="1180" y="852">12</text>
+  <rect class="box state" x="1215" y="796" width="130" height="108"/>
+  <text class="title" x="1280" y="824">结果处理</text>
+  <text class="sub" x="1280" y="847">成功：进入</text>
+  <text class="sub" x="1280" y="866">MongoDB 初始化</text>
+  <text class="sub" x="1280" y="888">失败：清理 EC2/EBS</text>
+  <path class="flow" d="M555,850 H688"/>
+  <path class="flow" d="M1050,850 H1163"/>
+</svg>

@@ -1,0 +1,137 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1700" height="1190" viewBox="0 0 1700 1190" role="img" aria-labelledby="title desc">
+  <title id="title">DDT 实时同步实际数据流</title>
+  <desc id="desc">根据当前代码实现：Oplog 或 Change Stream 事件经过原始事件队列、命名空间队列、分桶队列后写入目标端。DDL 使用全局缓存排空，唯一索引集合固定桶并有序写入。</desc>
+  <defs>
+    <style>
+      .title { font: 700 30px 'PingFang SC','Microsoft YaHei',Arial,sans-serif; fill: #172033; }
+      .subtitle { font: 400 16px 'PingFang SC','Microsoft YaHei',Arial,sans-serif; fill: #526074; }
+      .section { font: 700 19px 'PingFang SC','Microsoft YaHei',Arial,sans-serif; fill: #172033; }
+      .heading { font: 700 17px 'PingFang SC','Microsoft YaHei',Arial,sans-serif; fill: #172033; }
+      .text { font: 400 14px 'PingFang SC','Microsoft YaHei',Arial,sans-serif; fill: #344258; }
+      .small { font: 400 12px 'PingFang SC','Microsoft YaHei',Arial,sans-serif; fill: #526074; }
+      .band { fill: #f8fafc; stroke: #dbe4ef; stroke-width: 2; }
+      .source { fill: #ecfeff; stroke: #06b6d4; stroke-width: 2; }
+      .process { fill: #eff6ff; stroke: #3b82f6; stroke-width: 2; }
+      .queue { fill: #fff7ed; stroke: #f97316; stroke-width: 2.2; }
+      .route { fill: #f5f3ff; stroke: #8b5cf6; stroke-width: 2; }
+      .write { fill: #f0fdf4; stroke: #22c55e; stroke-width: 2; }
+      .guard { fill: #fff1f2; stroke: #f43f5e; stroke-width: 2; }
+      .observe { fill: #fefce8; stroke: #ca8a04; stroke-width: 2; }
+      .flow { fill: none; stroke: #334155; stroke-width: 2.5; marker-end: url(#arrow); }
+      .feedback { fill: none; stroke: #7c3aed; stroke-width: 2; stroke-dasharray: 8 6; marker-end: url(#feedbackArrow); }
+      .safe { fill: none; stroke: #e11d48; stroke-width: 2; stroke-dasharray: 6 5; marker-end: url(#safeArrow); }
+      .pill { fill: #172033; }
+      .pillText { font: 700 11px 'PingFang SC','Microsoft YaHei',Arial,sans-serif; fill: #ffffff; }
+    </style>
+    <marker id="arrow" markerWidth="10" markerHeight="10" refX="9" refY="5" orient="auto" markerUnits="strokeWidth">
+      <path d="M0,0 L10,5 L0,10 z" fill="#334155"/>
+    </marker>
+    <marker id="feedbackArrow" markerWidth="10" markerHeight="10" refX="9" refY="5" orient="auto" markerUnits="strokeWidth">
+      <path d="M0,0 L10,5 L0,10 z" fill="#7c3aed"/>
+    </marker>
+    <marker id="safeArrow" markerWidth="10" markerHeight="10" refX="9" refY="5" orient="auto" markerUnits="strokeWidth">
+      <path d="M0,0 L10,5 L0,10 z" fill="#e11d48"/>
+    </marker>
+  </defs>
+
+  <rect width="1700" height="1190" fill="#ffffff"/>
+  <text x="48" y="56" class="title">DDT 实时同步实际数据流</text>
+  <text x="48" y="84" class="subtitle">基于当前 realtime 源码：三层有界队列解耦，按集合串行解析，按桶并行写入。</text>
+
+  <rect x="40" y="120" width="1620" height="385" rx="16" class="band"/>
+  <text x="70" y="158" class="section">主流水线</text>
+
+  <rect x="70" y="244" width="185" height="124" rx="12" class="source"/>
+  <text x="100" y="284" class="heading">源端 MongoDB</text>
+  <text x="100" y="314" class="text">持续产生变更</text>
+  <text x="100" y="340" class="small">Oplog 或 Change Stream</text>
+
+  <rect x="320" y="220" width="220" height="172" rx="12" class="process"/>
+  <text x="350" y="260" class="heading">事件读取</text>
+  <text x="350" y="290" class="text">Oplog：持续追踪或区间回放</text>
+  <text x="350" y="317" class="text">Change Stream：监听变更</text>
+  <text x="350" y="344" class="small">过滤、延迟控制、记录内存时间位置</text>
+
+  <rect x="605" y="232" width="190" height="148" rx="12" class="queue"/>
+  <text x="635" y="272" class="heading">事件队列</text>
+  <text x="635" y="302" class="text">原始事件缓存</text>
+  <text x="635" y="332" class="small">有界阻塞</text>
+
+  <rect x="860" y="220" width="225" height="172" rx="12" class="route"/>
+  <text x="890" y="260" class="heading">按集合解析和路由</text>
+  <text x="890" y="290" class="text">识别 CRUD、DDL 与命令事件</text>
+  <text x="890" y="344" class="small">新集合先获取唯一索引信息</text>
+
+  <rect x="1150" y="232" width="190" height="148" rx="12" class="queue"/>
+  <text x="1180" y="272" class="heading">集合队列</text>
+  <text x="1180" y="302" class="text">每个集合独立队列</text>
+  <text x="1180" y="332" class="small">有界阻塞</text>
+
+  <rect x="1405" y="220" width="215" height="172" rx="12" class="route"/>
+  <text x="1435" y="260" class="heading">分桶转换</text>
+  <text x="1435" y="290" class="text">同一集合同一时刻仅一个解析线程</text>
+  <text x="1435" y="317" class="small">普通数据按 _id 哈希分桶</text>
+  <text x="1435" y="344" class="small">生成目标端写入批次</text>
+
+  <path d="M255 306 H320 M540 306 H605 M795 306 H860 M1085 306 H1150 M1340 306 H1405" class="flow"/>
+  <rect x="830" y="438" width="395" height="34" rx="17" class="pill"/>
+  <text x="854" y="461" class="pillText">三层队列均为有界阻塞：消费变慢时，背压逐级传回读取端</text>
+  <path d="M1245 380 V420 H1028 V438" class="feedback"/>
+  <path d="M700 380 V420 H1028" class="feedback"/>
+
+  <rect x="40" y="545" width="1620" height="200" rx="16" class="band"/>
+  <text x="70" y="583" class="section">桶级写入与顺序控制</text>
+
+  <rect x="265" y="624" width="270" height="82" rx="12" class="queue"/>
+  <text x="295" y="657" class="heading">写入桶队列</text>
+  <text x="295" y="684" class="text">按集合与分桶编号路由</text>
+
+  <rect x="715" y="612" width="270" height="106" rx="12" class="write"/>
+  <text x="745" y="649" class="heading">按桶批量写入</text>
+  <text x="745" y="677" class="text">同一桶同一时刻仅一个写入线程</text>
+  <text x="745" y="695" class="small">***写入线程判断一批128条中是否含有_id重复</text>
+  <text x="745" y="715" class="small">普通集合无序批量；唯一索引集合有序批量</text>
+
+  <rect x="1165" y="624" width="270" height="82" rx="12" class="source"/>
+  <text x="1195" y="657" class="heading">目标端 MongoDB</text>
+  <text x="1195" y="684" class="text">执行数据与结构变更</text>
+
+  <path d="M1512 392 V578 H400 V624" class="flow"/>
+  <path d="M535 665 H715 M985 665 H1165" class="flow"/>
+
+  <rect x="40" y="785" width="1620" height="276" rx="16" class="band"/>
+  <text x="70" y="823" class="section">当前实现的特殊路径与保障</text>
+
+  <rect x="80" y="862" width="350" height="154" rx="12" class="guard"/>
+  <text x="110" y="900" class="heading">DDL：全局排空等待</text>
+  <text x="110" y="928" class="text">DDL 入集合队列前后均等待缓存排空</text>
+  <text x="110" y="955" class="text">检查全部集合队列与写入桶队列</text>
+  <text x="110" y="982" class="small">全局屏障</text>
+
+  <rect x="500" y="862" width="350" height="154" rx="12" class="guard"/>
+  <text x="530" y="900" class="heading">唯一索引：固定桶</text>
+  <text x="530" y="928" class="text">检测到唯一索引后，集合的变更进入固定路径</text>
+  <text x="530" y="955" class="text">同集合使用有序写入，降低并发冲突</text>
+  <text x="530" y="982" class="small">普通集合仍按 _id 哈希获得并行度</text>
+
+  <rect x="920" y="862" width="350" height="154" rx="12" class="guard"/>
+  <text x="950" y="900" class="heading">批量失败：逐条回退</text>
+  <text x="950" y="928" class="text">批量写入异常后，逐条有序重试一次</text>
+  <text x="950" y="955" class="text">单条仍失败则记录错误并继续</text>
+  <text x="950" y="982" class="small">当前没有持久化重试或死信队列</text>
+
+  <rect x="1340" y="862" width="280" height="154" rx="12" class="observe"/>
+  <text x="1370" y="900" class="heading">状态与观测</text>
+  <text x="1370" y="928" class="text">统计缓存量、执行量和写入速率</text>
+  <text x="1370" y="955" class="text">读取结束或外部停止后退出</text>
+  <text x="1370" y="982" class="small">由任务编排层判断缓存收敛</text>
+
+  <path d="M255 862 V770 H1245 V706" class="safe"/>
+  <path d="M675 862 V770 H400 V706" class="safe"/>
+  <path d="M1095 862 V770 H850 V718" class="safe"/>
+  <path d="M1480 862 V770 H700 V380" class="feedback"/>
+
+  <rect x="40" y="1100" width="1620" height="54" rx="14" fill="#f8fafc" stroke="#dbe4ef" stroke-width="2"/>
+  <text x="70" y="1134" class="text">实际设计取舍：普通集合通过文档哈希分桶提高吞吐；DDL场景以更严格的排空、有序策略换取一致性。</text>
+
+</svg>

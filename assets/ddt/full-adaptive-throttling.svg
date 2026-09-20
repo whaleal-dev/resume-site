@@ -1,0 +1,121 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1500" height="1040" viewBox="0 0 1500 1040">
+  <defs>
+    <style>
+      .title { font: 700 30px 'PingFang SC','Microsoft YaHei',Arial,sans-serif; fill: #172033; }
+      .subtitle { font: 500 16px 'PingFang SC','Microsoft YaHei',Arial,sans-serif; fill: #526176; }
+      .section { font: 700 20px 'PingFang SC','Microsoft YaHei',Arial,sans-serif; fill: #172033; }
+      .heading { font: 700 17px 'PingFang SC','Microsoft YaHei',Arial,sans-serif; fill: #172033; }
+      .text { font: 500 14px 'PingFang SC','Microsoft YaHei',Arial,sans-serif; fill: #26354c; }
+      .small { font: 500 12px 'PingFang SC','Microsoft YaHei',Arial,sans-serif; fill: #46566c; }
+      .source { fill: #ecfeff; stroke: #06b6d4; stroke-width: 2; }
+      .reader { fill: #eff6ff; stroke: #3b82f6; stroke-width: 2; }
+      .queue { fill: #fff7ed; stroke: #f97316; stroke-width: 2.5; }
+      .writer { fill: #f0fdf4; stroke: #22c55e; stroke-width: 2; }
+      .controller { fill: #faf5ff; stroke: #a855f7; stroke-width: 2; }
+      .rule { fill: #ffffff; stroke: #cbd5e1; stroke-width: 1.5; }
+      .guard { fill: #fff1f2; stroke: #f43f5e; stroke-width: 2; }
+      .flow { stroke: #334155; stroke-width: 2.5; fill: none; marker-end: url(#arrow); }
+      .feedback { stroke: #7c3aed; stroke-width: 2; stroke-dasharray: 8 6; fill: none; marker-end: url(#feedbackArrow); }
+      .safety { stroke: #e11d48; stroke-width: 2.3; stroke-dasharray: 6 5; fill: none; marker-end: url(#safetyArrow); }
+      .divider { stroke: #e2e8f0; stroke-width: 2; }
+      .pill { fill: #172033; }
+      .pillText { font: 700 11px Arial,sans-serif; fill: #ffffff; }
+    </style>
+    <marker id="arrow" markerWidth="10" markerHeight="10" refX="9" refY="5" orient="auto" markerUnits="strokeWidth">
+      <path d="M0,0 L10,5 L0,10 z" fill="#334155"/>
+    </marker>
+    <marker id="feedbackArrow" markerWidth="10" markerHeight="10" refX="9" refY="5" orient="auto" markerUnits="strokeWidth">
+      <path d="M0,0 L10,5 L0,10 z" fill="#7c3aed"/>
+    </marker>
+    <marker id="safetyArrow" markerWidth="10" markerHeight="10" refX="9" refY="5" orient="auto" markerUnits="strokeWidth">
+      <path d="M0,0 L10,5 L0,10 z" fill="#e11d48"/>
+    </marker>
+  </defs>
+
+  <rect width="1500" height="1040" fill="#ffffff"/>
+  <text x="48" y="54" class="title">DDT 全量迁移双线程自适应限流策略</text>
+  <text x="48" y="82" class="subtitle">读线程以队列水位快速跟随，写线程以吞吐梯度慢速寻优；队列是供需反馈与背压中枢。</text>
+
+  <rect x="40" y="120" width="1420" height="275" rx="16" fill="#f8fafc" stroke="#dbe4ef" stroke-width="2"/>
+  <text x="68" y="157" class="section">数据平面：生产者 - 消费者</text>
+
+  <rect x="72" y="204" width="180" height="118" rx="12" class="source"/>
+  <text x="101" y="247" class="heading">源端 MongoDB</text>
+  <text x="103" y="274" class="text">按范围拉取数据</text>
+
+  <rect x="337" y="184" width="265" height="158" rx="12" class="reader"/>
+  <text x="370" y="224" class="heading">读取线程池（生产者）</text>
+  <text x="370" y="252" class="text">封装 DataBatch 并入队</text>
+  <text x="370" y="281" class="small">范围：min 2 ～ max (CPU / 2) × 1.5</text>
+  <text x="370" y="306" class="small">快变量：每 10 秒自适应调整</text>
+
+  <rect x="688" y="172" width="280" height="182" rx="12" class="queue"/>
+  <text x="731" y="216" class="heading">交换队列</text>
+  <text x="724" y="245" class="text">ArrayBlockingQueue&lt;DataBatch&gt;</text>
+  <text x="750" y="274" class="text">固定容量：2048</text>
+  <text x="722" y="310" class="small">有界阻塞：写满时反压读取端</text>
+  <text x="722" y="332" class="small">水位 = 当前长度 / 2048</text>
+
+  <rect x="1054" y="184" width="265" height="158" rx="12" class="writer"/>
+  <text x="1087" y="224" class="heading">写入线程池（消费者）</text>
+  <text x="1087" y="252" class="text">批量写入目标端</text>
+  <text x="1087" y="281" class="small">范围：min 2 ～ max CPU × 2</text>
+  <text x="1087" y="306" class="small">慢变量：每 2 分钟梯度探测</text>
+
+  <rect x="1365" y="204" width="70" height="118" rx="12" class="source"/>
+  <text x="1377" y="244" class="heading">目标</text>
+  <text x="1377" y="267" class="heading">MongoDB</text>
+  <text x="1380" y="294" class="small">bulk write</text>
+
+  <path d="M252 263 L337 263" class="flow"/>
+  <path d="M602 263 L688 263" class="flow"/>
+  <path d="M968 263 L1054 263" class="flow"/>
+  <path d="M1319 263 L1365 263" class="flow"/>
+
+  <line x1="40" y1="435" x2="1460" y2="435" class="divider"/>
+  <text x="48" y="478" class="section">调优控制平面：队列水位形成负反馈，读写控制器无需显式同步</text>
+
+  <rect x="72" y="515" width="560" height="340" rx="14" class="controller"/>
+  <text x="102" y="555" class="heading">读取线程水位控制器（快变量）</text>
+  <text x="102" y="582" class="text">每 10 秒采样；将当前水位与最近两次采样取平均</text>
+
+  <rect x="102" y="614" width="500" height="151" rx="9" class="rule"/>
+  <text x="126" y="648" class="text">平滑水位 &lt; 40%　→　读取线程数 +1（供给不足）</text>
+  <text x="126" y="684" class="text">40% ≤ 平滑水位 ≤ 60%　→　保持不变（供需平衡）</text>
+  <text x="126" y="720" class="text">平滑水位 &gt; 60%　→　读取线程数 -1（产生积压）</text>
+  <text x="126" y="748" class="small">每次调整均受 min 2 / max (CPU / 2) × 1.5 硬边界约束</text>
+
+  <rect x="102" y="786" width="500" height="42" rx="8" class="guard"/>
+  <text x="126" y="813" class="text">紧急熔断：实时水位 &gt; 85% 时，立即强制读取线程数 -1</text>
+
+  <rect x="868" y="515" width="560" height="340" rx="14" class="controller"/>
+  <text x="898" y="555" class="heading">写入线程梯度探测器（慢变量）</text>
+  <text x="898" y="582" class="text">每 2 分钟触发；若仍在冷却期则跳过</text>
+
+  <rect x="898" y="614" width="500" height="214" rx="9" class="rule"/>
+  <text x="922" y="646" class="text">1. 记录 n 线程最近 3 轮 × 1000 批平均耗时 T_old</text>
+  <text x="922" y="678" class="text">2. 临时调整为 n+1，预热 30 秒</text>
+  <text x="922" y="710" class="text">3. 执行 3 轮 × 1000 批，计算平均耗时 T_new</text>
+  <text x="922" y="748" class="text">T_new ≤ T_old × 1.05：保留 n+1，冷却 2 分钟</text>
+  <text x="922" y="782" class="text">T_new &gt; T_old × 1.05：回退 n，冷却 3 分钟</text>
+  <text x="922" y="810" class="small">所有调整均受 min 2 / max CPU × 2 硬边界约束</text>
+
+  <path d="M828 354 L828 480 L352 480 L352 515" class="feedback"/>
+  <rect x="580" y="453" width="184" height="26" rx="13" class="pill"/>
+  <text x="602" y="471" class="pillText">采样队列水位</text>
+  <path d="M352 515 L470 342" class="feedback"/>
+
+  <path d="M1186 515 L1186 430 L1186 342" class="feedback"/>
+  <rect x="1202" y="449" width="164" height="26" rx="13" class="pill"/>
+  <text x="1221" y="467" class="pillText">调整写入并发</text>
+  <path d="M1186 515 L1186 342" class="feedback"/>
+
+  <path d="M828 354 L828 410 L252 410 L252 184" class="safety"/>
+  <rect x="440" y="395" width="196" height="28" rx="14" fill="#e11d48"/>
+  <text x="459" y="414" class="pillText">水位 &gt; 85%：紧急减读</text>
+
+  <line x1="40" y1="898" x2="1460" y2="898" class="divider"/>
+  <text x="48" y="937" class="heading">协同关系</text>
+  <text x="48" y="966" class="text">写入线程以 2 分钟频率探索目标端承载力；读取线程以 10 秒频率跟随队列水位，持续匹配实际消费能力。</text>
+  <text x="48" y="994" class="small">安全优先级：线程数硬边界 ＞ 队列高水位紧急熔断 ＞ 常规水位调节 / 写入梯度探测。</text>
+</svg>

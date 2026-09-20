@@ -1,0 +1,104 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="900" viewBox="0 0 1600 900" role="img" aria-labelledby="title desc">
+  <title id="title">DDT 全量同步核心数据流</title>
+  <desc id="desc">从集合筛选、范围切分、受控并发读取、分区缓存、批量写入到收敛结束的全量同步核心原理。</desc>
+  <defs>
+    <style>
+      .title { font: 700 30px 'PingFang SC','Microsoft YaHei',Arial,sans-serif; fill: #172033; }
+      .subtitle { font: 400 16px 'PingFang SC','Microsoft YaHei',Arial,sans-serif; fill: #526074; }
+      .heading { font: 700 18px 'PingFang SC','Microsoft YaHei',Arial,sans-serif; fill: #172033; }
+      .text { font: 400 14px 'PingFang SC','Microsoft YaHei',Arial,sans-serif; fill: #344258; }
+      .small { font: 400 12px 'PingFang SC','Microsoft YaHei',Arial,sans-serif; fill: #526074; }
+      .source { fill: #ecfeff; stroke: #06b6d4; stroke-width: 2; }
+      .plan { fill: #f5f3ff; stroke: #8b5cf6; stroke-width: 2; }
+      .read { fill: #eff6ff; stroke: #3b82f6; stroke-width: 2; }
+      .cache { fill: #fff7ed; stroke: #f97316; stroke-width: 2.5; }
+      .write { fill: #f0fdf4; stroke: #22c55e; stroke-width: 2; }
+      .recovery { fill: #fff1f2; stroke: #f43f5e; stroke-width: 2; }
+      .finish { fill: #f1f5f9; stroke: #64748b; stroke-width: 2; }
+      .flow { fill: none; stroke: #334155; stroke-width: 2.5; marker-end: url(#arrow); }
+      .feedback { fill: none; stroke: #7c3aed; stroke-width: 2; stroke-dasharray: 8 6; marker-end: url(#feedbackArrow); }
+      .recover { fill: none; stroke: #e11d48; stroke-width: 2; stroke-dasharray: 6 5; marker-end: url(#recoverArrow); }
+      .band { fill: #f8fafc; stroke: #dbe4ef; stroke-width: 2; }
+      .badge { fill: #172033; }
+      .badgeText { font: 700 11px Arial,sans-serif; fill: #ffffff; }
+    </style>
+    <marker id="arrow" markerWidth="10" markerHeight="10" refX="9" refY="5" orient="auto" markerUnits="strokeWidth">
+      <path d="M0,0 L10,5 L0,10 z" fill="#334155"/>
+    </marker>
+    <marker id="feedbackArrow" markerWidth="10" markerHeight="10" refX="9" refY="5" orient="auto" markerUnits="strokeWidth">
+      <path d="M0,0 L10,5 L0,10 z" fill="#7c3aed"/>
+    </marker>
+    <marker id="recoverArrow" markerWidth="10" markerHeight="10" refX="9" refY="5" orient="auto" markerUnits="strokeWidth">
+      <path d="M0,0 L10,5 L0,10 z" fill="#e11d48"/>
+    </marker>
+  </defs>
+
+  <rect width="1600" height="900" fill="#ffffff"/>
+  <text x="48" y="56" class="title">DDT 全量同步核心数据流</text>
+  <text x="48" y="84" class="subtitle">设计原则：按范围拆分任务，以受控并发提升吞吐，用有界缓存解耦读写，并在失败时可恢复。</text>
+
+  <rect x="40" y="120" width="1520" height="370" rx="16" class="band"/>
+  <text x="70" y="158" class="heading">主数据流</text>
+
+  <rect x="70" y="234" width="200" height="124" rx="12" class="source"/>
+  <text x="101" y="274" class="heading">源端集合</text>
+  <text x="101" y="304" class="text">按白名单筛选</text>
+  <text x="101" y="330" class="small">确定需要迁移的数据范围</text>
+
+  <rect x="342" y="211" width="250" height="170" rx="12" class="plan"/>
+  <text x="373" y="251" class="heading">范围切分</text>
+  <text x="373" y="281" class="text">按 _id 类型与范围拆分</text>
+  <text x="373" y="307" class="text">生成连续的读取任务</text>
+  <text x="373" y="337" class="small">根据文档平均大小动态确定批量大小</text>
+
+  <rect x="664" y="234" width="240" height="124" rx="12" class="plan"/>
+  <text x="695" y="274" class="heading">任务队列</text>
+  <text x="695" y="304" class="text">暂存待读取范围</text>
+  <text x="695" y="330" class="small">多个集合的任务可交错执行</text>
+
+  <rect x="976" y="211" width="260" height="170" rx="12" class="read"/>
+  <text x="1007" y="251" class="heading">受控并发读取</text>
+  <text x="1007" y="281" class="text">活跃读取任务不超过上限</text>
+  <text x="1007" y="307" class="text">按范围顺序读取文档并组批</text>
+  <text x="1007" y="337" class="small">每个读取任务负责一个数据区间</text>
+
+  <rect x="1308" y="196" width="210" height="200" rx="12" class="cache"/>
+  <text x="1339" y="236" class="heading">分区有界缓存</text>
+  <text x="1339" y="266" class="text">暂存读取批次</text>
+  <text x="1339" y="294" class="text">读写线程相互解耦</text>
+  <text x="1339" y="328" class="small">缓存满时阻塞读取端</text>
+  <text x="1339" y="352" class="small">将写入压力反压至源端</text>
+
+  <path d="M270 296 H342 M592 296 H664 M904 296 H976 M1236 296 H1308" class="flow"/>
+  <path d="M1413 396 V442 H1106 V381" class="feedback"/>
+  <text x="1131" y="430" class="small">有界缓存提供自然背压</text>
+
+  <rect x="638" y="412" width="240" height="50" rx="10" class="recovery"/>
+  <text x="667" y="443" class="text">读取异常：从已读位置续读剩余范围</text>
+  <path d="M1106 381 V412 H878" class="recover"/>
+
+  <rect x="40" y="530" width="1520" height="174" rx="16" class="band"/>
+  <text x="70" y="568" class="heading">写入与容错</text>
+
+  <rect x="208" y="592" width="270" height="76" rx="12" class="cache"/>
+  <text x="240" y="623" class="heading">从分区缓存获取批次</text>
+  <text x="240" y="648" class="text">写入端持续消费已就绪的数据</text>
+
+  <rect x="665" y="592" width="270" height="76" rx="12" class="write"/>
+  <text x="697" y="623" class="heading">批量写入目标端</text>
+  <text x="697" y="648" class="text">优先使用有序批量写入保证一致性</text>
+
+  <rect x="1122" y="592" width="270" height="76" rx="12" class="source"/>
+  <text x="1154" y="623" class="heading">目标端集合</text>
+  <text x="1154" y="648" class="text">完成数据落库</text>
+
+  <path d="M478 630 H665 M935 630 H1122" class="flow"/>
+  <path d="M800 668 V690 H585 V668" class="recover"/>
+  <text x="609" y="695" class="small">批量失败：自动降为逐条写入重试</text>
+
+  <rect x="40" y="744" width="1520" height="106" rx="16" class="finish"/>
+  <text x="70" y="782" class="heading">收敛与结束</text>
+  <text x="70" y="812" class="text">当范围任务生成结束、任务队列为空、读取任务结束且分区缓存清空后，等待写入完成并释放连接与线程资源。</text>
+  <circle cx="1454" cy="796" r="15" class="badge"/>
+  <text x="1450" y="800" class="badgeText">OK</text>
+</svg>

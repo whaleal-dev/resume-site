@@ -1,0 +1,130 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1440" height="980" viewBox="0 0 1440 980" role="img" aria-labelledby="title desc">
+  <title id="title">WAP 事件组异步运维任务流程</title>
+  <desc id="desc">展示用户提交任务后创建 eventId、集群锁、后台步骤与 Agent 命令、暂停继续终止、最终关闭或异常的流程。</desc>
+  <defs>
+    <marker id="arrow" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto" markerUnits="strokeWidth">
+      <path d="M0,0 L0,6 L9,3 z" fill="#475569"/>
+    </marker>
+    <marker id="green-arrow" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto" markerUnits="strokeWidth">
+      <path d="M0,0 L0,6 L9,3 z" fill="#16a34a"/>
+    </marker>
+    <marker id="red-arrow" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto" markerUnits="strokeWidth">
+      <path d="M0,0 L0,6 L9,3 z" fill="#dc2626"/>
+    </marker>
+    <style>
+      .bg { fill: #f8fafc; }
+      .stage { fill: #ffffff; stroke: #cbd5e1; stroke-width: 1.5; }
+      .box { stroke-width: 1.5; rx: 12; }
+      .user { fill: #e0f2fe; stroke: #0ea5e9; }
+      .event { fill: #ede9fe; stroke: #7c3aed; }
+      .lock { fill: #fef3c7; stroke: #d97706; }
+      .task { fill: #dcfce7; stroke: #16a34a; }
+      .agent { fill: #dbeafe; stroke: #2563eb; }
+      .pause { fill: #ffedd5; stroke: #ea580c; }
+      .end { fill: #dcfce7; stroke: #16a34a; }
+      .error { fill: #fee2e2; stroke: #dc2626; }
+      .title { font: 700 15px "PingFang SC", "Microsoft YaHei", sans-serif; fill: #1e293b; text-anchor: middle; }
+      .sub { font: 12px "PingFang SC", "Microsoft YaHei", sans-serif; fill: #475569; text-anchor: middle; }
+      .stage-title { font: 700 16px "PingFang SC", "Microsoft YaHei", sans-serif; fill: #334155; }
+      .main-title { font: 700 24px "PingFang SC", "Microsoft YaHei", sans-serif; fill: #0f172a; text-anchor: middle; }
+      .note { font: 12px "PingFang SC", "Microsoft YaHei", sans-serif; fill: #64748b; text-anchor: middle; }
+      .flow { fill: none; stroke: #475569; stroke-width: 2; marker-end: url(#arrow); }
+      .success { fill: none; stroke: #16a34a; stroke-width: 2; marker-end: url(#green-arrow); }
+      .fail { fill: none; stroke: #dc2626; stroke-width: 2; marker-end: url(#red-arrow); }
+      .dash { fill: none; stroke: #64748b; stroke-width: 1.5; stroke-dasharray: 6 5; marker-end: url(#arrow); }
+    </style>
+  </defs>
+
+  <rect class="bg" width="1440" height="900"/>
+  <text class="main-title" x="720" y="42">WAP 事件组：异步运维任务的可控编排</text>
+  <text class="note" x="720" y="67">以同一个 eventId 串联任务、命令、日志、人工干预和最终状态</text>
+
+  <rect class="stage" x="40" y="95" width="1360" height="175" rx="14"/>
+  <text class="stage-title" x="68" y="125">1. 建档与集群互斥</text>
+  <rect class="box user" x="95" y="153" width="220" height="74"/>
+  <text class="title" x="205" y="182">用户提交运维请求</text>
+  <text class="sub" x="205" y="205">创建、备份、恢复或变更</text>
+  <rect class="box event" x="415" y="142" width="270" height="96"/>
+  <text class="title" x="550" y="172">创建事件组 EventLog</text>
+  <text class="sub" x="550" y="195">生成 eventId，记录集群、操作人</text>
+  <text class="sub" x="550" y="216">状态：Init -> Running</text>
+  <rect class="box lock" x="790" y="142" width="250" height="96"/>
+  <text class="title" x="915" y="172">获取集群互斥锁</text>
+  <text class="sub" x="915" y="195">eventLock 对 clusterId 唯一</text>
+  <text class="sub" x="915" y="216">冲突等待，超时则异常结束</text>
+  <rect class="box task" x="1140" y="153" width="205" height="74"/>
+  <text class="title" x="1242" y="182">后台任务启动</text>
+  <text class="sub" x="1242" y="205">接口立即返回 eventId</text>
+  <path class="flow" d="M315,190 H398"/>
+  <path class="flow" d="M685,190 H773"/>
+  <path class="flow" d="M1040,190 H1123"/>
+
+  <rect class="stage" x="40" y="300" width="1360" height="295" rx="14"/>
+  <text class="stage-title" x="68" y="330">2. 步骤执行、命令回执与日志汇总</text>
+  <rect class="box task" x="115" y="360" width="260" height="94"/>
+  <text class="title" x="245" y="399">执行编排步骤</text>
+  <text class="sub" x="245" y="422">资源准备、拓扑初始化、校验</text>
+  <text class="sub" x="245" y="443">每一步写入 eventId 日志</text>
+  <rect class="box agent" x="435" y="360" width="255" height="94"/>
+  <text class="title" x="562" y="389">创建 CommandEntity</text>
+  <text class="sub" x="562" y="412">绑定 hostId、eventId、命令类型和内容</text>
+  <text class="sub" x="562" y="433">持久化后状态：已下发未响应</text>
+  <rect class="box agent" x="800" y="360" width="230" height="94"/>
+  <text class="title" x="915" y="389">Agent 拉取并执行</text>
+  <text class="sub" x="915" y="412">GET 拉取本机待执行命令</text>
+  <text class="sub" x="915" y="433">确认入队，调用对应执行器</text>
+  <rect class="box event" x="1140" y="360" width="210" height="94"/>
+  <text class="title" x="1245" y="389">回传与事件汇总</text>
+  <text class="sub" x="1245" y="412">PUT 状态、结果和更新时间</text>
+  <text class="sub" x="1245" y="433">与 EventLog 合并为时间线</text>
+  <path class="flow" d="M375,407 H418"/>
+  <path class="flow" d="M800,407 H707"/>
+  <path class="flow" d="M1030,407 H1123"/>
+  <path class="dash" d="M1245,360 V345 H245 V360"/>
+  <text class="note" x="770" y="348">编排线程轮询同一 eventId 下的命令状态，并检测暂停或终止信号</text>
+
+  <text class="note" x="100" y="492">命令生命周期</text>
+  <rect class="box agent" x="195" y="470" width="205" height="66"/>
+  <text class="title" x="297" y="496">1. 已下发未响应</text>
+  <text class="sub" x="297" y="518">等待目标 Agent 拉取</text>
+  <rect class="box lock" x="475" y="470" width="205" height="66"/>
+  <text class="title" x="577" y="496">2. 已响应执行中</text>
+  <text class="sub" x="577" y="518">Agent 已确认并进入队列</text>
+  <rect class="box end" x="755" y="470" width="205" height="66"/>
+  <text class="title" x="857" y="496">3. 执行成功</text>
+  <text class="sub" x="857" y="518">结果写入命令与事件日志</text>
+  <rect class="box error" x="1035" y="470" width="260" height="66"/>
+  <text class="title" x="1165" y="496">执行失败、无响应或超时</text>
+  <text class="sub" x="1165" y="518">记录错误，事件组转入 Pause</text>
+  <path class="flow" d="M400,503 H458"/>
+  <path class="success" d="M680,503 H738"/>
+  <path class="fail" d="M680,527 V555 H1165 V543"/>
+  <path class="fail" d="M960,503 H1018"/>
+
+  <rect class="stage" x="40" y="625" width="1360" height="295" rx="14"/>
+  <text class="stage-title" x="68" y="655">3. 状态机、人工干预与结束</text>
+  <rect class="box task" x="100" y="722" width="215" height="82"/>
+  <text class="title" x="207" y="752">Running</text>
+  <text class="sub" x="207" y="775">等待全部命令与步骤完成</text>
+  <rect class="box end" x="480" y="705" width="225" height="82"/>
+  <text class="title" x="592" y="735">Closed</text>
+  <text class="sub" x="592" y="758">全部成功，释放集群锁</text>
+  <rect class="box pause" x="480" y="825" width="225" height="82"/>
+  <text class="title" x="592" y="855">Pause</text>
+  <text class="sub" x="592" y="878">失败或超时，等待人工处理</text>
+  <rect class="box task" x="865" y="705" width="225" height="82"/>
+  <text class="title" x="977" y="735">继续执行</text>
+  <text class="sub" x="977" y="758">失败命令标记为可继续</text>
+  <rect class="box error" x="1130" y="825" width="215" height="82"/>
+  <text class="title" x="1237" y="855">Abort / Exception</text>
+  <text class="sub" x="1237" y="878">终止或暂停超时，释放锁</text>
+  <path class="success" d="M315,743 H463"/>
+  <text class="note" x="389" y="729">全部成功</text>
+  <path class="fail" d="M207,804 V866 H463"/>
+  <text class="note" x="335" y="858">命令失败或超时</text>
+  <path class="success" d="M705,866 H790 V746 H848"/>
+  <text class="note" x="790" y="826">人工继续</text>
+  <path class="success" d="M865,746 H332 V763"/>
+  <path class="fail" d="M705,866 H1113"/>
+  <text class="note" x="909" y="858">人工终止或暂停超时</text>
+</svg>

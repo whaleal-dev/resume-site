@@ -1,0 +1,13 @@
+node_modules/
+dist/
+build/
+.env*
+*.pem
+*.key
+*.log
+.DS_Store
+.idea/
+.vscode/
+.agents/
+.claude/
+.codex/

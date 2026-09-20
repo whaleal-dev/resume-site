@@ -1,0 +1,64 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="780" viewBox="0 0 1200 780" role="img" aria-labelledby="title desc">
+  <title id="title">Kafka MongoDB 实时同步数据流</title>
+  <desc id="desc">展示 MongoDB Oplog 经 Kafka Producer 分流到 DML 和 DDL Topic，再由 Consumer 按 DDL Barrier 顺序写入目标 MongoDB 的设计流程。</desc>
+  <defs>
+    <style>.bg{fill:#f8fafc}.title{font:700 28px -apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC",sans-serif;fill:#0f172a}.h{font:700 16px -apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC",sans-serif;fill:#0f172a}.t{font:14px -apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC",sans-serif;fill:#334155}.source{fill:#eff6ff;stroke:#3b82f6;stroke-width:2}.kafka{fill:#fff7ed;stroke:#f97316;stroke-width:2}.dml{fill:#ecfdf5;stroke:#10b981;stroke-width:2}.ddl{fill:#f5f3ff;stroke:#8b5cf6;stroke-width:2}.target{fill:#fff;stroke:#94a3b8;stroke-width:2}.arr{fill:none;stroke:#64748b;stroke-width:2;marker-end:url(#arrow)}.barrier{fill:none;stroke:#8b5cf6;stroke-width:2;stroke-dasharray:8 6;marker-end:url(#violet)}</style>
+    <marker id="arrow" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto"><path d="M0 0 L0 6 L9 3 z" fill="#64748b"/></marker>
+    <marker id="violet" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto"><path d="M0 0 L0 6 L9 3 z" fill="#8b5cf6"/></marker>
+  </defs>
+  <rect class="bg" width="1200" height="780"/>
+  <text class="title" x="60" y="58">Kafka MongoDB 实时同步数据流</text>
+
+  <rect class="source" x="55" y="135" width="210" height="150" rx="14"/>
+  <text class="h" x="85" y="175">MongoDB Source</text>
+  <text class="t" x="85" y="207">Oplog</text>
+  <text class="t" x="85" y="232">DML：insert／update／delete</text>
+  <text class="t" x="85" y="257">DDL：索引与集合元数据</text>
+
+  <rect class="kafka" x="335" y="135" width="210" height="150" rx="14"/>
+  <text class="h" x="365" y="175">Kafka Producer</text>
+  <text class="t" x="365" y="207">读取 Oplog 事件</text>
+  <text class="t" x="365" y="232">按事件类型分流</text>
+  <text class="t" x="365" y="257">保留 ts 顺序依据</text>
+
+  <rect class="kafka" x="615" y="105" width="250" height="205" rx="14"/>
+  <text class="h" x="650" y="145">Kafka Topics</text>
+  <rect class="dml" x="650" y="165" width="180" height="52" rx="10"/>
+  <text class="h" x="680" y="197">ddt-mongo-dml</text>
+  <text class="t" x="650" y="242">多 Partition</text>
+  <text class="t" x="650" y="267">Key：ns + primaryKey</text>
+  <rect class="ddl" x="650" y="278" width="180" height="52" rx="10"/>
+  <text class="h" x="692" y="310">ddt-mongo-ddl</text>
+  <text class="t" x="850" y="307">1 Partition</text>
+
+  <path class="arr" d="M265 210 H330"/>
+  <path class="arr" d="M545 210 H610"/>
+
+  <rect class="dml" x="125" y="410" width="250" height="145" rx="14"/>
+  <text class="h" x="165" y="450">DML Consumer</text>
+  <text class="t" x="165" y="482">Consumer Group</text>
+  <text class="t" x="165" y="507">并行处理多个 Partition</text>
+  <text class="t" x="165" y="532">ts ≤ Barrier：执行</text>
+
+  <rect class="ddl" x="475" y="410" width="250" height="145" rx="14"/>
+  <text class="h" x="515" y="450">DDL Consumer</text>
+  <text class="t" x="515" y="482">单 Partition 顺序读取</text>
+  <text class="t" x="515" y="507">设置并执行 DDL Barrier</text>
+  <text class="t" x="515" y="532">完成后提交并推进位点</text>
+
+  <rect class="target" x="825" y="410" width="250" height="145" rx="14"/>
+  <text class="h" x="885" y="450">MongoDB Target</text>
+  <text class="t" x="885" y="482">DML 写入</text>
+  <text class="t" x="885" y="507">DDL 按序执行</text>
+  <text class="t" x="885" y="532">保持事件顺序</text>
+
+  <path class="arr" d="M740 218 C740 330 250 330 250 405"/>
+  <path class="arr" d="M740 218 C740 330 600 330 600 405"/>
+  <path class="arr" d="M375 482 H820"/>
+  <path class="arr" d="M725 515 H820"/>
+  <path class="barrier" d="M600 560 V650 H250 V560"/>
+
+  <rect class="ddl" x="160" y="650" width="880" height="75" rx="14"/>
+  <text class="h" x="195" y="681">DDL Barrier</text>
+  <text class="t" x="195" y="706">DDL ts = T102 完成并 commit 后，Barrier 向后移动，释放 ts &gt; T102 的 DML。</text>
+</svg>

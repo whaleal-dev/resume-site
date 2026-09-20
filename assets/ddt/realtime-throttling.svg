@@ -1,0 +1,120 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1680" height="1220" viewBox="0 0 1680 1220" role="img" aria-labelledby="title desc">
+  <title id="title">DDT 实时同步写入线程自适应扩缩容</title>
+  <desc id="desc">读取端固定单线程，缓存高于 60% 触发读取背压和写入扩容，低于 20% 持续五分钟触发写入缩容。扩缩容均按十万条写入耗时和百分之五容忍带决策，调整后冷却五分钟。</desc>
+  <defs>
+    <style>
+      .title { font: 700 30px 'PingFang SC','Microsoft YaHei',Arial,sans-serif; fill: #172033; }
+      .subtitle { font: 400 16px 'PingFang SC','Microsoft YaHei',Arial,sans-serif; fill: #526074; }
+      .section { font: 700 19px 'PingFang SC','Microsoft YaHei',Arial,sans-serif; fill: #172033; }
+      .heading { font: 700 17px 'PingFang SC','Microsoft YaHei',Arial,sans-serif; fill: #172033; }
+      .text { font: 400 14px 'PingFang SC','Microsoft YaHei',Arial,sans-serif; fill: #344258; }
+      .small { font: 400 12px 'PingFang SC','Microsoft YaHei',Arial,sans-serif; fill: #526074; }
+      .band { fill: #f8fafc; stroke: #dbe4ef; stroke-width: 2; }
+      .source { fill: #ecfeff; stroke: #06b6d4; stroke-width: 2; }
+      .reader { fill: #eff6ff; stroke: #3b82f6; stroke-width: 2; }
+      .queue { fill: #fff7ed; stroke: #f97316; stroke-width: 2.5; }
+      .writer { fill: #f0fdf4; stroke: #22c55e; stroke-width: 2; }
+      .scaleUp { fill: #fff1f2; stroke: #f43f5e; stroke-width: 2; }
+      .steady { fill: #f0fdf4; stroke: #22c55e; stroke-width: 2; }
+      .scaleDown { fill: #eff6ff; stroke: #3b82f6; stroke-width: 2; }
+      .decision { fill: #f5f3ff; stroke: #8b5cf6; stroke-width: 2; }
+      .flow { fill: none; stroke: #334155; stroke-width: 2.5; marker-end: url(#arrow); }
+      .feedback { fill: none; stroke: #7c3aed; stroke-width: 2; stroke-dasharray: 8 6; marker-end: url(#feedbackArrow); }
+      .safety { fill: none; stroke: #e11d48; stroke-width: 2.2; stroke-dasharray: 6 5; marker-end: url(#safetyArrow); }
+      .divider { stroke: #dbe4ef; stroke-width: 2; }
+      .pill { fill: #172033; }
+      .pillText { font: 700 11px 'PingFang SC','Microsoft YaHei',Arial,sans-serif; fill: #ffffff; }
+    </style>
+    <marker id="arrow" markerWidth="10" markerHeight="10" refX="9" refY="5" orient="auto" markerUnits="strokeWidth">
+      <path d="M0,0 L10,5 L0,100 z" fill="#334155"/>
+    </marker>
+    <marker id="feedbackArrow" markerWidth="10" markerHeight="10" refX="9" refY="5" orient="auto" markerUnits="strokeWidth">
+      <path d="M0,0 L10,5 L0,100 z" fill="#7c3aed"/>
+    </marker>
+    <marker id="safetyArrow" markerWidth="10" markerHeight="10" refX="9" refY="5" orient="auto" markerUnits="strokeWidth">
+      <path d="M0,0 L10,5 L0,100 z" fill="#e11d48"/>
+    </marker>
+  </defs>
+
+  <rect width="1680" height="1220" fill="#ffffff"/>
+  <text x="48" y="56" class="title">DDT 实时同步写入线程自适应扩缩容</text>
+  <text x="48" y="84" class="subtitle">读取端由缓存水位背压保护；写入端以吞吐探测双向扩缩容，持续匹配当前流量与目标端承载力。</text>
+
+  <rect x="40" y="120" width="1600" height="250" rx="16" class="band"/>
+  <text x="70" y="158" class="section">数据平面：读取端固定单线程，写入端动态并发</text>
+
+  <rect x="80" y="210" width="200" height="112" rx="12" class="source"/>
+  <text x="110" y="249" class="heading">源端 Change Stream</text>
+  <text x="110" y="279" class="text">持续输出变更事件</text>
+
+  <rect x="375" y="190" width="260" height="152" rx="12" class="reader"/>
+  <text x="407" y="230" class="heading">读取端：固定 1 线程</text>
+  <text x="407" y="260" class="text">单线程消费并写入缓存</text>
+  <text x="407" y="289" class="small">水位超限时暂停，水位恢复后继续</text>
+
+  <rect x="730" y="177" width="260" height="178" rx="12" class="queue"/>
+  <text x="762" y="217" class="heading">有界缓存队列</text>
+  <text x="762" y="247" class="text">缓冲读写速度差</text>
+  <text x="762" y="278" class="small">≥ 60%：暂停读取，形成背压</text>
+  <text x="762" y="304" class="small">&lt; 60%：恢复读取</text>
+
+  <rect x="1085" y="190" width="260" height="152" rx="12" class="writer"/>
+  <text x="1117" y="230" class="heading">写入端：动态线程池</text>
+  <text x="1117" y="260" class="text">并发消费缓存并批量写入</text>
+  <text x="1117" y="289" class="small">最小 2，最大 CPU 核数 × 2</text>
+
+  <rect x="1440" y="210" width="160" height="112" rx="12" class="source"/>
+  <text x="1470" y="249" class="heading">目标端</text>
+  <text x="1470" y="274" class="heading">MongoDB</text>
+  <text x="1470" y="300" class="small">批量写入</text>
+
+  <path d="M280 266 H375 M635 266 H730 M990 266 H1085 M1345 266 H1440" class="flow"/>
+  <path d="M860 355 V394 H505 V342" class="safety"/>
+  <rect x="580" y="380" width="304" height="28" rx="14" fill="#e11d48"/>
+  <text x="604" y="399" class="pillText">缓存 ≥ 60%：暂停读取，避免缓存持续堆积</text>
+
+  <line x1="40" y1="440" x2="1640" y2="440" class="divider"/>
+  <text x="48" y="482" class="section">每 2 分钟自检：缓存水位决定扩缩容方向（扩容与缩容互斥）</text>
+
+  <rect x="75" y="525" width="430" height="128" rx="14" class="scaleDown"/>
+  <text x="105" y="565" class="heading">低水位：触发缩容探测</text>
+  <text x="105" y="595" class="text">缓存 &lt; 20%，且持续超过 2 分钟</text>
+  <text x="105" y="622" class="small">前提：当前写入线程数 &gt; 2</text>
+
+  <rect x="625" y="525" width="430" height="128" rx="14" class="steady"/>
+  <text x="655" y="565" class="heading">稳定区：保持当前并发</text>
+  <text x="655" y="595" class="text">20% ≤ 缓存使用率 &lt; 60%</text>
+  <text x="655" y="622" class="small">不扩容、不缩容</text>
+
+  <rect x="1175" y="525" width="430" height="128" rx="14" class="scaleUp"/>
+  <text x="1205" y="565" class="heading">高水位：触发扩容探测</text>
+  <text x="1205" y="595" class="text">缓存使用率 ≥ 60%</text>
+  <text x="1205" y="622" class="small">前提：当前写入线程数 &lt; CPU 核数 × 2</text>
+
+  <path d="M860 355 V477 H290 V525" class="feedback"/>
+  <path d="M860 355 V477 H840 V525" class="feedback"/>
+  <path d="M860 355 V477 H1390 V525" class="feedback"/>
+  <rect x="756" y="462" width="210" height="28" rx="14" class="pill"/>
+  <text x="782" y="481" class="pillText">读取缓存水位</text>
+
+  <rect x="75" y="703" width="430" height="60" rx="16" class="scaleDown"/>
+  <text x="105" y="743" class="heading">写入线程数 n → n - 1</text>
+
+
+  <rect x="905" y="703" width="700" height="338" rx="16" class="scaleUp"/>
+  <text x="935" y="743" class="heading">扩容探测：n → n + 1</text>
+  <text x="935" y="775" class="text">1. 记录 n 线程完成 100 万条写入的平均耗时 T_old</text>
+  <text x="935" y="807" class="text">2. 临时增加 1 个线程，预热 30 秒</text>
+  <text x="935" y="839" class="text">3. 记录 n + 1 线程完成 100 万条写入的平均耗时 T_new</text>
+  <rect x="935" y="871" width="640" height="64" rx="10" fill="#ffffff" stroke="#cbd5e1" stroke-width="1.5"/>
+  <text x="962" y="899" class="text">T_new ≤ T_old × 1.05：保留 n + 1，允许后续继续扩容</text>
+  <text x="962" y="924" class="text">T_new &gt; T_old × 1.05：回退 n，停止本轮扩容</text>
+
+
+  <path d="M290 653 V703" class="flow"/>
+  <path d="M1390 653 V703" class="flow"/>
+
+  <rect x="40" y="1080" width="1600" height="76" rx="16" class="decision"/>
+  <text x="70" y="1114" class="heading">闭环效果</text>
+  <text x="70" y="1141" class="text">写入不足时缓存升高，读取暂停并触发扩容；写入富余时缓存长期低位，触发缩容；缓存稳定在 20% ～ 60% 时维持当前并发。</text>
+</svg>

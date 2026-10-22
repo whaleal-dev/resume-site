@@ -102,10 +102,102 @@ const projects = {
   }
 };
 
+const projectsEn = {
+  wap: {
+    role: "Core development + project management",
+    outcome: "10+ enterprise customers / 200+ clusters",
+    intro: "A MongoDB data services and operations platform for AWS and private deployments. It covers resource provisioning, node management, monitoring and alerting, automated remediation, backup and recovery, data migration, and auditing, with AI operations capabilities built on LLMs, RAG, Tool Calling, and Agents.",
+    resume: [
+      ["Responsibilities", "Led core development and project management, building microservices, cloud resource orchestration, distributed Agent execution, and monitoring and alerting. Integrated operations manuals, troubleshooting documents, and platform APIs into an AI operations assistant for diagnosis and remediation planning."],
+      ["Technical challenges", "Kept long-running tasks controllable and their states traceable across VPCs, private networks, and temporary node outages. Applied permission checks, risk classification, and human confirmation for high-risk AI tool execution."],
+      ["Outcomes", "Served 10+ enterprise customers and managed 200+ MongoDB clusters. The Agent collected 70+ host and application metrics at second-level intervals and supplied data and execution capabilities for AI troubleshooting."]
+    ],
+    doc: [
+      ["Microservices and distributed tasks", "Built a microservices architecture with Spring Boot, Spring Cloud, and Nacos for service registration and discovery, centralized configuration, and horizontal scaling across instances. Combined asynchronous tasks with state machines to distribute long-running work."],
+      ["Unified entry point and service routing", "Used Nginx and Spring Cloud Gateway as the unified entry point, keeping frontend clients and Agents independent of individual backend instances. The gateway routes requests to management or collection services by API prefix, then uses Nacos to discover healthy instances and perform client-side load balancing. User requests use JWT and role-based permissions; Agent requests use separate node identity checks. Nginx serves the static frontend and proxies APIs. Production deployments also require HTTPS, managed secrets, health checks, gradual rollouts, and high availability across instances."],
+      ["Automated MongoDB cluster creation on AWS", "Orchestrated AWS infrastructure into a one-click provisioning workflow covering VPCs, subnets, security groups, EC2, TGW, and S3. REST endpoints return an eventId for long-running operations; asynchronous event groups then coordinate step logs, command acknowledgements, state machines, timeouts, failure compensation, and human intervention."],
+      ["Semi-automated Kubernetes integration", "Represented Kubernetes Pods as managed hosts. A StatefulSet creates Agent Pods with stable names, stable DNS, and individual PVCs; after Agent registration, the platform reuses its existing task orchestration and operations capabilities. StatefulSets provide identity and storage for stateful workloads, Headless Services enable member discovery, and StorageClasses with PVCs provision persistent volumes dynamically. Production considerations include Pod anti-affinity, scheduling across availability zones, PDBs, health probes, NetworkPolicies, CSI drivers, and least-privilege container security policies."],
+      ["Event groups and execution states", "An Event connects event creation, Command generation, Agent polling and execution, and status reporting. Events record states and operation logs. Commands specify the hostId, eventId, command type, and payload. Agents retrieve pending commands with GET and report status, results, and execution times with PUT. Successful tasks close; failures, missing responses, and timeouts enter Pause for human handling. Manual termination enters Abort / Exception."],
+      ["Distributed Agent execution", "Used persisted server-side commands, Agent polling, and status reporting for remote execution, without requiring the server to connect directly to nodes. Supported separate VPCs, private networks, and temporary node outages with command idempotency, timeouts, resume, and termination controls. This also provides the execution foundation for AI Agent operations."],
+      ["AI operations and Agents", "Built an AI operations assistant with LLMs, RAG, Tool Calling, and Agents. Integrated operations manuals, troubleshooting documents, and API documentation into its knowledge and tool system. Natural-language queries can analyze cluster states, monitoring metrics, alerts, and logs, using operations knowledge to produce diagnoses and remediation plans."],
+      ["Monitoring and alerting", "Developed a host and application metrics Agent that collects 70+ metrics, including CPU, memory, disk, network, connections, and latency, at second-level intervals. Time-series aggregation by resource ID and metric, together with threshold alerts, event deduplication, notification rate limits, and automatic recovery, supports real-time monitoring, trend analysis, and AI troubleshooting."],
+      ["Backup, recovery, and object storage", "Provided S3 object storage configuration, file uploads and downloads, backup retention policies, recovery tasks, and execution records. Supported point-in-time recovery to keep data recoverable and tasks traceable."],
+      ["Security and permissions", "Encrypted cloud account credentials, Kubernetes configuration, and object storage credentials at rest and masked them in the interface. Used RBAC, operation audits, and AI tool risk classification to control sensitive operations, with human confirmation for high-risk actions."]
+    ],
+    images: [
+      ["assets/wap/infra.svg", "WAP entry points and service routing: access layer, gateway, services, and Agents"],
+      ["assets/wap/aws-infrastructure-orchestration.svg", "WAP automated cloud provisioning: initial AWS EC2 orchestration"],
+      ["assets/wap/aws-mongodb-provisioning.svg", "WAP automated MongoDB cluster creation on AWS"],
+      ["assets/wap/k8s-mongodb-provisioning.svg", "WAP MongoDB cluster creation and management on Kubernetes"],
+      ["assets/wap/image7.png", "WAP backup workflow: DDT full backups and S3 snapshot recovery"],
+      ["assets/wap/image8.png", "WAP Oplog-based recovery: mongodump / mongorestore"],
+      ["assets/wap/event-group.svg", "WAP event groups and Agent lifecycle: controlled orchestration of asynchronous operations"],
+      ["assets/wap/credential-encryption.svg", "WAP sensitive configuration encryption and on-demand decryption"]
+    ]
+  },
+  ddt: {
+    role: "Sole developer",
+    outcome: "Full sync: 300k records/s · real-time: 100k records/s / 50TB+",
+    intro: "A MongoDB migration and synchronization platform supporting full migration, incremental real-time synchronization, and checkpoint recovery between standalone instances, replica sets, and sharded clusters, with migration consistency checks.",
+    resume: [
+      ["Responsibilities", "Independently designed and developed the MongoDB migration and synchronization platform from the ground up. Built a pluggable engine with Maven modules for full, incremental, and combined full plus incremental modes, including the CDC pipeline, performance tuning, and consistency verification."],
+      ["Technical challenges", "Balanced throughput, production database load, ordering, failure recovery, and source-to-target consistency during large migrations. Designed ordered consumption and horizontal scaling with DML / DDL topics, partition keys, and a DDL Barrier, achieving synchronization latency of no more than one second."],
+      ["Outcomes", "Reached 300,000 records/s for full synchronization and 100,000 records/s for real-time synchronization. Served 10+ enterprise production environments and migrated more than 50TB of data."]
+    ],
+    doc: [
+      ["Synchronization engine architecture", "Designed the synchronization platform from the ground up with full, incremental, and combined full plus incremental modes. Built a pluggable engine using Maven modules to migrate data between standalone instances, replica sets, and sharded clusters."],
+      ["Full synchronization with _id range partitioning", "Split tasks by <code>_id</code> ranges for parallel reads. Each Chunk is limited to 128MB and 1.28 million records. Controlled concurrency and bounded partition buffers decouple reads from writes, with buffer utilization applying backpressure to readers. The write stage uses bulk writes and a fallback on failure to support throughput, stability, and recovery. Compared with Skip pagination, scanning an <code>_id</code> cursor sequentially to locate boundaries significantly reduces repeated scans and source database load."],
+      ["Full synchronization throttling", "Configured throttling for the deployment environment to match the capacity of the read, transform, and write stages. Reduced reads as buffers approached their high-water marks to avoid exhausting memory and database connections, then gradually restored reads as write capacity recovered."],
+      ["Real-time synchronization with Oplog and memory queues", "Built a CDC pipeline on MongoDB Oplog, using memory queues for asynchronous decoupling, dynamic throttling, and failure recovery. Captured changes centrally, isolated them by collection, bucketed them by document, and wrote them to the target in batches. Collection isolation and document bucketing preserve the order of changes to the same document."],
+      ["Kafka CDC messaging architecture", "Extended the Oplog synchronization design with a Kafka CDC messaging architecture. DML / DDL topics, partition keys, and a DDL Barrier support ordered consumption and horizontal scaling, with synchronization latency of no more than one second."],
+      ["Real-time throttling feedback loop", "Adapted the number of real-time write threads to buffer utilization: sustained utilization above 60% triggers scale-out, while sustained utilization below 20% triggers scale-in. Both directions use the average time to process one million records as their benchmark, with a ±5% tolerance band and a two-minute cooldown after each adjustment. Reader backpressure based on buffer utilization completes the adaptive feedback loop."],
+      ["Data consistency verification", "Combined multiple verification methods to compare full and incremental synchronization results between source and target. Optimized reads, transformations, and bulk writes for large migrations, using concurrency control and dynamic throttling to achieve 300,000 records/s for full synchronization and 100,000 records/s for real-time synchronization."],
+      ["Logical consistency and recovery", "The architecture does not depend on physical clocks. A backup Agent negotiates a logical freeze across all shards, obtains each shard's Oplog lastApplied value, and stores <code>&lt;shard_id, timestamp&gt;</code> pairs as global consistency metadata for the backup. Inspired by MongoDB clusterTime, this design locates a consistent data view during recovery in sharded environments."],
+      ["Benchmark data", "The original documents compare full and real-time synchronization performance, CPU usage, and memory usage, and analyze the complexity of different partition-boundary queries. Benchmark details: <a href='https://www.whaleal.io/docs/3.0.7/document-data-transfer/use-case/full-test/' target='_blank' rel='noreferrer'>Whaleal DDT Full Test ↗</a>."]
+    ],
+    images: [
+      ["assets/ddt/full-dataflow.svg", "DDT full synchronization data flow: range partitioning and bounded buffers"],
+      ["assets/ddt/full-adaptive-throttling.svg", "DDT adaptive throttling for full migration with two threads"],
+      ["assets/ddt/image3.png", "DDT partition-boundary query comparison with 100 million records"],
+      ["assets/ddt/realtime-dataflow.svg", "DDT real-time synchronization data flow: three layers of bounded queues"],
+      ["assets/ddt/realtime-throttling.svg", "DDT adaptive scaling of real-time synchronization write threads"],
+      ["assets/ddt/image10.png", "DDT full and real-time synchronization benchmarks: QPS, CPU, and memory"]
+    ]
+  },
+  archive: {
+    role: "Core developer",
+    outcome: "100+ scheduled tasks",
+    intro: "A historical data lifecycle platform that uses a distributed scheduler to archive hot and cold data from relational databases, including MySQL, Oracle, DB2, and PostgreSQL, to MongoDB and S3 object storage, reducing storage pressure on online databases.",
+    resume: [
+      ["Responsibilities", "Built the Rocket distributed scheduling engine. Unified relational database access and target storage integration through Adapters; designed dynamic MySQL partitioning, multithreaded and multi-instance parallel reads, bulk writes, idempotent processing, and hot / cold storage tiering."],
+      ["Technical challenges", "Prevented duplicate and missed scheduling across highly available instances. Used dynamic Chunks, concurrency control, and TPS limits to reduce source database load when archiving tables with tens of millions of rows, and maintained target consistency with idempotent writes and safe retries."],
+      ["Outcomes", "Supported stable execution of 100+ scheduled archival tasks across MySQL, Oracle, DB2, and PostgreSQL data sources, with hot / cold storage tiering between MongoDB and S3."]
+    ],
+    doc: [
+      ["Rocket distributed scheduler", "Built Rocket to decouple task scheduling from execution, with minute-level Cron schedules, high availability across instances, and tag-based routing for 100+ scheduled archival tasks. Atomic confirmation and idempotent publication isolate failures: Scheduler instances compete for a scheduling lock; the winner creates INIT subtasks in batches, advances next_fire_time, and releases the lock. Subtasks are then published as READY in batches for Worker instances to retrieve and execute."],
+      ["Heterogeneous data sources", "Used the Adapter pattern to unify data access, encapsulating connection management, SQL queries, paginated reads, and schema discovery for MySQL, Oracle, DB2, and PostgreSQL. A common integration layer for multiple target stores reduces the cost of adding data sources."],
+      ["MySQL partitioning and parallel reads", "For tables with tens of millions of rows, split primary-key or time ranges into independent subtasks with dynamically determined Chunk boundaries. Multiple threads and instances read in parallel. Chunk sizing, concurrency control, and dynamic TPS limits improve throughput while reducing source database load."],
+      ["Complete archival pipeline", "Partitioning → subtasks → Worker task acquisition → keyset pagination → batch reads → TPS limits → MongoDB Bulk Write → idempotency → retries. Primary-key or time ranges divide large tables into independent subtasks. Workers use keyset pagination to avoid deep offset scans; read-side TPS limits protect the source, while the target receives bulk writes."],
+      ["Target write engine", "Built bulk writes and idempotent processing, using unique identifiers to detect duplicates and support safe retries without losing or duplicating data during migration. MongoDB target writes use <code>_id</code> for idempotency."],
+      ["Hot and cold storage tiering", "Supported full archiving, incremental appends, and expired-data cleanup. Automatically moved historical data beyond the retention period to S3, coordinating object storage and online storage throughout the data lifecycle."],
+      ["State machines and reliability", "Task state machines cover execution, failure, retries, and human intervention, with operation audit logs for traceability. MongoDB parent task records include status, next_fire_time, lock_owner, and lock_time. Subtask records include task_id, batch_time, chunk_index, and status; compound unique indexes prevent duplicates."]
+    ],
+    images: [
+      ["assets/archive/image1.png", "Archival platform: distributed scheduler deployment without a registry"],
+      ["assets/archive/image3.png", "Archival platform: four-step sequence for normal scheduling"]
+    ]
+  }
+};
+
 /* ---------- resolve project ---------- */
+const i18n = window.resumeI18n;
+const text = (zh, en) => i18n.text(zh, en);
 const id = new URLSearchParams(location.search).get("id");
-const project = projects[id] || projects.wap;
-document.title = `${project.name} · 李和平`;
+const projectId = Object.prototype.hasOwnProperty.call(projects, id) ? id : "wap";
+const project = i18n.language === "en" ? { ...projects[projectId], ...projectsEn[projectId] } : projects[projectId];
+const projectsHref = i18n.href("index.html#projects");
+document.title = `${project.name} · ${text("李和平", "Li Heping")}`;
+document.querySelector('meta[name="description"]').content = project.intro;
 
 /* ---------- template helpers ---------- */
 const pad = (n) => String(n + 1).padStart(2, "0");
@@ -123,7 +215,7 @@ const makeImage = ([source, caption]) =>
 document.querySelector("#project-root").innerHTML = `
   <section class="case-hero">
     <div class="container case-hero-inner">
-      <p class="case-crumb"><a href="index.html#projects">PROJECTS</a><i>/</i><span>${project.code.split(" / ")[0]}</span></p>
+      <p class="case-crumb"><a href="${projectsHref}">PROJECTS</a><i>/</i><span>${project.code.split(" / ")[0]}</span></p>
       <h1>${project.name}<span>${project.code}</span></h1>
       <p class="case-intro">${project.intro}</p>
       <div class="case-meta">
@@ -139,8 +231,8 @@ document.querySelector("#project-root").innerHTML = `
     <section class="case-sec">
       <div class="case-sec-head reveal">
         <span class="sec-index">01 / RESUME NOTE</span>
-        <h2>项目速览</h2>
-        <p>项目职责、关键挑战与交付成果。</p>
+        <h2>${text("项目速览", "Project overview")}</h2>
+        <p>${text("项目职责、关键挑战与交付成果。", "Responsibilities, technical challenges, and outcomes.")}</p>
       </div>
       <div class="resume-cards">${project.resume.map(makeResume).join("")}</div>
     </section>
@@ -148,8 +240,8 @@ document.querySelector("#project-root").innerHTML = `
     <section class="case-sec">
       <div class="case-sec-head reveal">
         <span class="sec-index">02 / TECH NOTES</span>
-        <h2>项目技术方案</h2>
-        <p>依据最新简历与原始项目文档整理，呈现架构设计、关键机制与交付数据。</p>
+        <h2>${text("项目技术方案", "Technical design")}</h2>
+        <p>${text("依据最新简历与原始项目文档整理，呈现架构设计、关键机制与交付数据。", "Architecture, key mechanisms, and delivery metrics drawn from the latest resume and original project documents.")}</p>
       </div>
       ${project.doc.map(makeDoc).join("")}
     </section>
@@ -157,8 +249,8 @@ document.querySelector("#project-root").innerHTML = `
     <section class="case-sec">
       <div class="case-sec-head reveal">
         <span class="sec-index">03 / SOURCE FIGURES</span>
-        <h2>架构图与流程图</h2>
-        <p>文档内全部图片按原始顺序展示，<code>点击图片</code> 可放大与缩放查看。</p>
+        <h2>${text("架构图与流程图", "Architecture and workflows")}</h2>
+        <p>${text("文档内全部图片按原始顺序展示，<code>点击图片</code> 可放大与缩放查看。原图保留原始语言。", "Figures appear in their original document order. <code>Click an image</code> to open and zoom it. Original figures retain their source language.")}</p>
       </div>
       <div class="gallery">${project.images.map(makeImage).join("")}</div>
     </section>
@@ -166,7 +258,7 @@ document.querySelector("#project-root").innerHTML = `
 
   <footer class="case-nav">
     <div class="container">
-      <a href="index.html#projects">← 返回项目列表</a>
+      <a href="${projectsHref}">${text("← 返回项目列表", "← Back to projects")}</a>
       <small>${project.code} · ${project.period} · LI HE PING</small>
       <a href="mailto:mlhp123@outlook.com">mlhp123@outlook.com <span aria-hidden="true">↗</span></a>
     </div>
@@ -197,48 +289,59 @@ if (!("IntersectionObserver" in window) || window.matchMedia("(prefers-reduced-m
 }
 
 /* ---------- lightbox ---------- */
-const lightbox = document.createElement("div");
+const lightbox = document.createElement("dialog");
 lightbox.className = "image-lightbox";
-lightbox.setAttribute("role", "dialog");
-lightbox.setAttribute("aria-modal", "true");
-lightbox.setAttribute("aria-label", "图片预览");
+lightbox.setAttribute("aria-label", text("图片预览", "Image preview"));
 lightbox.innerHTML = `
-  <button class="lightbox-close" type="button" aria-label="关闭图片预览">×</button>
-  <button class="lightbox-zoom lightbox-zoom-in" type="button" aria-label="放大">+</button>
-  <button class="lightbox-zoom lightbox-zoom-out" type="button" aria-label="缩小">−</button>
-  <button class="lightbox-zoom lightbox-zoom-reset" type="button" aria-label="重置缩放">100%</button>
-  <div class="lightbox-stage"><img alt=""></div>
+  <button class="lightbox-close" type="button" aria-label="${text("关闭图片预览", "Close image preview")}">×</button>
+  <button class="lightbox-zoom lightbox-zoom-in" type="button" aria-label="${text("放大", "Zoom in")}">+</button>
+  <button class="lightbox-zoom lightbox-zoom-out" type="button" aria-label="${text("缩小", "Zoom out")}">−</button>
+  <button class="lightbox-zoom lightbox-zoom-reset" type="button" aria-label="${text("重置缩放", "Reset zoom")}">100%</button>
+  <div class="lightbox-stage" role="region" tabindex="0" aria-label="${text("图片区域，可滚动查看放大后的图片", "Image area; scroll to view the zoomed image")}"><img alt=""></div>
   <p class="lightbox-caption"></p>`;
 document.body.append(lightbox);
 
 let zoom = 1;
+let triggerFigure = null;
+const previewStage = lightbox.querySelector(".lightbox-stage");
 const previewImage = lightbox.querySelector("img");
 const zoomLabel = lightbox.querySelector(".lightbox-zoom-reset");
 const updateZoom = (next) => {
   zoom = Math.min(4, Math.max(0.5, next));
-  previewImage.style.transform = `scale(${zoom})`;
+  if (previewImage.naturalWidth) {
+    const fit = Math.min(previewStage.clientWidth / previewImage.naturalWidth, window.innerHeight * 0.78 / previewImage.naturalHeight, 1);
+    previewImage.style.width = `${previewImage.naturalWidth * fit * zoom}px`;
+    previewImage.style.height = `${previewImage.naturalHeight * fit * zoom}px`;
+  }
   zoomLabel.textContent = `${Math.round(zoom * 100)}%`;
 };
-const closeLightbox = () => {
-  lightbox.classList.remove("is-open");
+const closeLightbox = () => lightbox.close();
+lightbox.addEventListener("close", () => {
   document.body.classList.remove("lightbox-open");
   updateZoom(1);
-};
+  if (triggerFigure) triggerFigure.focus({ preventScroll: true });
+});
 const openLightbox = (image) => {
+  triggerFigure = image.closest("figure");
   previewImage.src = image.currentSrc || image.src;
   previewImage.alt = image.alt;
   lightbox.querySelector(".lightbox-caption").textContent = image.alt;
-  lightbox.classList.add("is-open");
+  lightbox.showModal();
   document.body.classList.add("lightbox-open");
   updateZoom(1);
+  previewStage.scrollTo(0, 0);
   lightbox.querySelector(".lightbox-close").focus();
 };
+previewImage.addEventListener("load", () => updateZoom(zoom));
+window.addEventListener("resize", () => {
+  if (lightbox.open) updateZoom(zoom);
+});
 
 document.querySelectorAll(".gallery figure").forEach((figure) => {
   const image = figure.querySelector("img");
   figure.tabIndex = 0;
   figure.setAttribute("role", "button");
-  figure.setAttribute("aria-label", `放大查看：${image.alt}`);
+  figure.setAttribute("aria-label", `${text("放大查看：", "Enlarge: ")}${image.alt}`);
   figure.addEventListener("click", () => openLightbox(image));
   figure.addEventListener("keydown", (event) => {
     if (event.key === "Enter" || event.key === " ") {
@@ -252,16 +355,16 @@ lightbox.querySelector(".lightbox-close").addEventListener("click", closeLightbo
 lightbox.querySelector(".lightbox-zoom-in").addEventListener("click", () => updateZoom(zoom + 0.25));
 lightbox.querySelector(".lightbox-zoom-out").addEventListener("click", () => updateZoom(zoom - 0.25));
 lightbox.querySelector(".lightbox-zoom-reset").addEventListener("click", () => updateZoom(1));
-lightbox.querySelector(".lightbox-stage").addEventListener("wheel", (event) => {
+previewStage.addEventListener("wheel", (event) => {
+  if (!event.ctrlKey) return;
   event.preventDefault();
   updateZoom(zoom + (event.deltaY < 0 ? 0.15 : -0.15));
 }, { passive: false });
 lightbox.addEventListener("click", (event) => {
-  if (event.target === lightbox || event.target.classList.contains("lightbox-stage")) closeLightbox();
+  if (event.target === lightbox) closeLightbox();
 });
 document.addEventListener("keydown", (event) => {
-  if (!lightbox.classList.contains("is-open")) return;
-  if (event.key === "Escape") closeLightbox();
+  if (!lightbox.open) return;
   if (event.key === "+" || event.key === "=") updateZoom(zoom + 0.25);
   if (event.key === "-") updateZoom(zoom - 0.25);
 });

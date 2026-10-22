@@ -9,11 +9,11 @@ const projects = {
     code: "WAP / MONGODB DATA SERVICE PLATFORM",
     period: "2023.01 — 2026.03",
     role: "核心开发 + 项目管理",
-    stack: "Java · Spring Boot / Cloud · Nacos · AWS · MongoDB · LLM / RAG · Agent",
+    stack: "Java · Spring Boot / Cloud · Nacos · AWS · MongoDB · LLM / RAG · Tool Calling · Agent",
     outcome: "10+ 企业客户 / 200+ 集群",
     intro: "面向 AWS 云与私有化环境的 MongoDB 数据服务运维平台。覆盖资源交付、节点纳管、监控告警、自动化处置、备份恢复、数据迁移和审计能力，并以 LLM、RAG、Tool Calling 与 Agent 构建 AI 智能运维。",
     resume: [
-      ["项目职责", "承担核心开发与项目管理；基于 Spring Boot、Spring Cloud 与 Nacos 构建微服务体系，负责云资源编排、分布式 Agent 执行、监控告警、备份恢复与安全权限，并接入 AI 知识与工具体系。"],
+      ["项目职责", "承担核心开发与项目管理，建设微服务体系、云资源编排、分布式 Agent 执行与监控告警能力；接入运维手册、故障文档及平台 API，构建 AI 运维助手，支持诊断与处理方案生成。"],
       ["技术挑战", "在跨 VPC、私有网络和节点短暂离线场景下保证长耗时任务可控、状态可追踪；同时对 AI Tool 执行进行权限校验、风险分级和高危操作人工确认。"],
       ["项目成果", "平台服务 10+ 企业级客户，管理 200+ MongoDB 集群；Agent 支持秒级采集 70+ 主机及应用指标，并为 AI 故障诊断提供数据与执行能力。"]
     ],
@@ -46,14 +46,15 @@ const projects = {
     period: "2021.06 — 2021.10",
     role: "独立开发",
     stack: "Java · Maven · MongoDB · Oplog · Kafka · CDC",
-    outcome: "50TB+ / 30 万条每秒",
+    outcome: "全量 30 万条/秒 · 实时 10 万条/秒 / 50TB+",
     intro: "MongoDB 数据迁移与同步平台，支持单节点、副本集及分片集群之间的全量迁移、增量实时同步与断点续传，保障数据迁移的一致性。",
     resume: [
-      ["项目职责", "独立开发 MongoDB 数据迁移与同步平台，从 0 到 1 负责架构设计，抽象全量、增量和全量 + 增量三种模式；以 Maven 多模块设计可插拔同步引擎，并进一步设计 Kafka CDC 消息架构。"],
+      ["项目职责", "独立开发 MongoDB 数据迁移与同步平台，从 0 到 1 负责架构设计；以 Maven 多模块构建可插拔引擎，支持全量、增量及全量 + 增量三种模式，负责 CDC 链路、性能优化与一致性校验。"],
       ["技术挑战", "在海量数据迁移时兼顾吞吐、生产库压力、顺序性、失败恢复与源目标一致性；通过 DML / DDL Topic、Partition Key 与 DDL Barrier 支持有序消费和水平扩展，实现同步延迟 ≤1 秒。"],
       ["项目成果", "全量同步吞吐达 30 万条/秒，实时同步达 10 万条/秒；服务 10+ 企业生产环境，累计迁移数据超 50TB。"]
     ],
     doc: [
+      ["同步引擎架构", "从 0 到 1 负责数据同步平台架构，抽象全量同步、增量同步、全量 + 增量三种模式；基于 Maven 多模块设计可插拔同步引擎，支持单节点、副本集及分片集群之间的数据迁移。"],
       ["全量同步：按 _id 范围分片", "按 <code>_id</code> 范围拆分任务并行读取。单个 Chunk 控制在不超过 128MB 且不超过 128 万条数据；以受控并发和有界分区缓存解耦读写，缓存水位对读取端形成背压。写入端使用批量写入与失败回退，保证全量迁移的吞吐、稳定性和可恢复性。相比 Skip 分页，顺序扫描 <code>_id</code> Cursor 并定位边界可显著降低反复扫描带来的源库压力。"],
       ["全量同步限流", "限流参数按实际应用环境配置，核心目标是让读取、转换、写入三段流水线的处理能力相互匹配。当缓存接近高水位时降低读取压力，避免任务将内存和数据库连接耗尽；当写入侧恢复处理能力时再逐步放开读取。"],
       ["实时同步：Oplog 与内存队列", "基于 MongoDB Oplog 构建 CDC 实时同步链路，采用内存队列实现异步解耦、动态限流及失败恢复。统一采集变更后按集合隔离、按文档分桶，批量写入目标端；通过集合隔离与文档分桶避免同一文档的变更乱序。"],
@@ -77,12 +78,12 @@ const projects = {
     code: "ARCHIVE / DISTRIBUTED SCHEDULER",
     period: "2022.01 — 2022.12",
     role: "核心开发",
-    stack: "Java · MySQL · MongoDB · JDBC · S3 · Rocket",
+    stack: "Java · MySQL / Oracle / DB2 / PostgreSQL · JDBC · MongoDB · S3 · Rocket",
     outcome: "100+ 周期任务",
     intro: "历史数据生命周期管理平台，通过分布式调度引擎将 MySQL、Oracle、DB2、PostgreSQL 等关系型数据库中的冷热数据高效归档至 MongoDB 及 S3 对象存储，降低在线库存储压力。",
     resume: [
       ["项目职责", "自研 Rocket 分布式调度引擎；以 Adapter 统一关系型数据库访问与目标存储适配，设计 MySQL 动态分片、多线程与多实例并行读取，并构建批量写入、幂等处理和冷热分层能力。"],
-      ["技术挑战", "在多实例高可用环境下保证调度不重不漏；在不影响源库的前提下完成千万级数据表的并行归档，并确保目标端数据不丢不重。"],
+      ["技术挑战", "在多实例高可用环境下保证调度不重不漏；通过动态 Chunk、并发控制与 TPS 限流降低千万级大表归档对源库的压力，并以幂等写入和安全重试保障目标端数据一致性。"],
       ["项目成果", "支撑 100+ 周期性归档任务稳定运行，覆盖 MySQL、Oracle、DB2、PostgreSQL 等数据源，支持 MongoDB + S3 冷热分层。"]
     ],
     doc: [
@@ -138,8 +139,8 @@ document.querySelector("#project-root").innerHTML = `
     <section class="case-sec">
       <div class="case-sec-head reveal">
         <span class="sec-index">01 / RESUME NOTE</span>
-        <h2>面试摘要</h2>
-        <p>职责 · 挑战 · 交付结果 —— 面向沟通的项目速览。</p>
+        <h2>项目速览</h2>
+        <p>项目职责、关键挑战与交付成果。</p>
       </div>
       <div class="resume-cards">${project.resume.map(makeResume).join("")}</div>
     </section>

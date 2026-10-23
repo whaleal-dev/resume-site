@@ -80,7 +80,7 @@
       if (!event.target.closest("a")) open();
     });
     card.addEventListener("keydown", (event) => {
-      if (event.key === "Enter" || event.key === " ") {
+      if (event.target === card && (event.key === "Enter" || event.key === " ")) {
         event.preventDefault();
         open();
       }

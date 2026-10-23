@@ -519,6 +519,7 @@ a.fig-card:hover { transform: translateY(-4px); border-color: var(--brand-line);
 .pc-stats { display: flex; flex-wrap: wrap; gap: 8px 22px; }
 .pc-stats span { font-family: var(--font-mono); font-size: 11px; color: var(--ink-3); white-space: nowrap; }
 .pc-stats span b { color: var(--ink); font-weight: 500; }
+.pc-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 12px 20px; }
 .pc-go {
   display: inline-flex;
   align-items: center;

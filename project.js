@@ -6,16 +6,17 @@ document.documentElement.classList.add("js");
 const projects = {
   wap: {
     name: "Whaleal Platform",
+    website: "https://www.whaleal.io/",
     code: "WAP / MONGODB DATA SERVICE PLATFORM",
     period: "2023.01 — 2026.03",
     role: "核心开发 + 项目管理",
     stack: "Java · Spring Boot / Cloud · Nacos · AWS · MongoDB · LLM / RAG · Tool Calling · Agent",
-    outcome: "10+ 企业客户 / 200+ 集群",
+    outcome: "20+ 企业客户 / 200+ 集群",
     intro: "面向 AWS 云与私有化环境的 MongoDB 数据服务运维平台。覆盖资源交付、节点纳管、监控告警、自动化处置、备份恢复、数据迁移和审计能力，并以 LLM、RAG、Tool Calling 与 Agent 构建 AI 智能运维。",
     resume: [
       ["项目职责", "承担核心开发与项目管理，建设微服务体系、云资源编排、分布式 Agent 执行与监控告警能力；接入运维手册、故障文档及平台 API，构建 AI 运维助手，支持诊断与处理方案生成。"],
       ["技术挑战", "在跨 VPC、私有网络和节点短暂离线场景下保证长耗时任务可控、状态可追踪；同时对 AI Tool 执行进行权限校验、风险分级和高危操作人工确认。"],
-      ["项目成果", "平台服务 10+ 企业级客户，管理 200+ MongoDB 集群；Agent 支持秒级采集 70+ 主机及应用指标，并为 AI 故障诊断提供数据与执行能力。"]
+      ["项目成果", "平台服务 20+ 企业级客户，管理 200+ MongoDB 集群；Agent 支持秒级采集 70+ 主机及应用指标，并为 AI 故障诊断提供数据与执行能力。"]
     ],
     doc: [
       ["微服务架构与分布式任务", "基于 Spring Boot + Spring Cloud + Nacos 构建微服务体系，实现服务注册发现、统一配置及多实例水平扩展；结合异步任务与状态机，实现长耗时任务的分布式处理。"],
@@ -105,12 +106,12 @@ const projects = {
 const projectsEn = {
   wap: {
     role: "Core development + project management",
-    outcome: "10+ enterprise customers / 200+ clusters",
+    outcome: "20+ enterprise customers / 200+ clusters",
     intro: "A MongoDB data services and operations platform for AWS and private deployments. It covers resource provisioning, node management, monitoring and alerting, automated remediation, backup and recovery, data migration, and auditing, with AI operations capabilities built on LLMs, RAG, Tool Calling, and Agents.",
     resume: [
       ["Responsibilities", "Led core development and project management, building microservices, cloud resource orchestration, distributed Agent execution, and monitoring and alerting. Integrated operations manuals, troubleshooting documents, and platform APIs into an AI operations assistant for diagnosis and remediation planning."],
       ["Technical challenges", "Kept long-running tasks controllable and their states traceable across VPCs, private networks, and temporary node outages. Applied permission checks, risk classification, and human confirmation for high-risk AI tool execution."],
-      ["Outcomes", "Served 10+ enterprise customers and managed 200+ MongoDB clusters. The Agent collected 70+ host and application metrics at second-level intervals and supplied data and execution capabilities for AI troubleshooting."]
+      ["Outcomes", "Served 20+ enterprise customers and managed 200+ MongoDB clusters. The Agent collected 70+ host and application metrics at second-level intervals and supplied data and execution capabilities for AI troubleshooting."]
     ],
     doc: [
       ["Microservices and distributed tasks", "Built a microservices architecture with Spring Boot, Spring Cloud, and Nacos for service registration and discovery, centralized configuration, and horizontal scaling across instances. Combined asynchronous tasks with state machines to distribute long-running work."],
@@ -224,6 +225,7 @@ document.querySelector("#project-root").innerHTML = `
         <div><span>Stack</span><b>${project.stack}</b></div>
         <div><span>Outcome</span><b>${project.outcome}</b></div>
       </div>
+      ${project.website ? `<div class="hero-actions"><a class="btn btn-glass" href="${project.website}" target="_blank" rel="noreferrer">${text("访问 Whaleal 官网", "Visit Whaleal website")} <span aria-hidden="true">↗</span></a></div>` : ""}
     </div>
   </section>
 
